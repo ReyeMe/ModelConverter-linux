@@ -40,7 +40,7 @@
         /// Gets or sets a value indicating whether to show help screen
         /// </summary>
         [CmdHelp("Shows this helps screen.")]
-        [CmdArgument("help")]
+        [CmdArgument("-help", "h")]
         public bool ShowHelp { get; set; }
 
         /// <summary>

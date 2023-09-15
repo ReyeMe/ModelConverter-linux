@@ -13,11 +13,17 @@
         /// </summary>
         /// <param name="name">Argument name</param>
         /// <param name="isRequired">Indicates whether argument is required</param>
-        public CmdArgumentAttribute(string name = "", bool isRequired = false)
+        public CmdArgumentAttribute(string name = "", string alternative = "", bool isRequired = false)
         {
             this.Name = name;
+            this.Alternative = alternative;
             this.IsRequired = isRequired;
         }
+
+        /// <summary>
+        /// Gets alternative argument name
+        /// </summary>
+        public string Alternative { get; }
 
         /// <summary>
         /// Gets a value indicating whether argument is required

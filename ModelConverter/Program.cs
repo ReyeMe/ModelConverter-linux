@@ -20,7 +20,7 @@
             ArgumentSettings settings = Parser<ArgumentSettings>.Parse(args);
 
             // Show help and exit
-            if (settings.ShowHelp)
+            if (settings.ShowHelp || args.Length == 0)
             {
                 Parser<ArgumentSettings>.PrintHelp();
                 Environment.Exit(0);
@@ -66,13 +66,13 @@
 
             if (string.IsNullOrEmpty(settings.InputFile) || !File.Exists(settings.InputFile))
             {
-                Console.WriteLine("Input file is missing!");
+                Console.WriteLine("Input file is missing! Use --help or -h for help.");
                 Environment.Exit(0);
             }
 
             if (string.IsNullOrEmpty(settings.OuputFile) || !Directory.Exists(Path.GetDirectoryName(settings.OuputFile)))
             {
-                Console.WriteLine("Output directory is missing!");
+                Console.WriteLine("Output directory is missing! Use --help or -h for help.");
                 Environment.Exit(0);
             }
 
@@ -90,7 +90,7 @@
 
                 if (importPlugin == null)
                 {
-                    Console.WriteLine("No available plugin supports this file extension!");
+                    Console.WriteLine("No available plugin supports this file extension! Use -plugins to see available plugins.");
                     Environment.Exit(0);
                 }
             }
@@ -102,7 +102,7 @@
 
                 if (importPlugin == null)
                 {
-                    Console.WriteLine("Selected plugin not found!");
+                    Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
                     Environment.Exit(0);
                 }
             }
@@ -128,7 +128,7 @@
 
                 if (exportPlugin == null)
                 {
-                    Console.WriteLine("No available plugin supports this file extension!");
+                    Console.WriteLine("No available plugin supports this file extension! Use -plugins to see available plugins.");
                     Environment.Exit(0);
                 }
             }
@@ -140,7 +140,7 @@
 
                 if (exportPlugin == null)
                 {
-                    Console.WriteLine("Selected plugin not found!");
+                    Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
                     Environment.Exit(0);
                 }
             }

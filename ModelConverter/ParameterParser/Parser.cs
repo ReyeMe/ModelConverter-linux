@@ -37,6 +37,7 @@
             // Create view instance
             ViewModel model = Activator.CreateInstance<ViewModel>();
 
+            // Get all properties
             foreach (PropertyInfo property in properties)
             {
                 CmdArgumentAttribute? argument = property.GetCustomAttribute<CmdArgumentAttribute>();
@@ -62,6 +63,20 @@
                         else
                         {
                             property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Name]));
+                        }
+                    }
+                    else if (foundArguments.ContainsKey(argument.Alternative))
+                    {
+                        CmdConverterAttribute? converter = property.GetCustomAttribute<CmdConverterAttribute>();
+
+                        // Check whether we will use default conversion or not
+                        if (converter != null)
+                        {
+                            property.SetValue(model, converter.Convert(foundArguments[argument.Alternative]));
+                        }
+                        else
+                        {
+                            property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Alternative]));
                         }
                     }
                     else if (argument.IsRequired)
@@ -100,7 +115,20 @@
                 // Show only properties that have both argument and help attribute set
                 if (argument != null && help != null)
                 {
-                    Console.WriteLine(string.Format("\t-{0}\t\t{1}\n", argument.Name, help.Text));
+                    if (string.IsNullOrEmpty(argument.Alternative))
+                    {
+                        Console.Write(string.Format("\t-{0}", argument.Name));
+                        Console.CursorLeft = 0;
+
+                        Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
+                    }
+                    else
+                    {
+                        Console.Write(string.Format("\t-{0}, -{1}", argument.Name, argument.Alternative));
+                        Console.CursorLeft = 0;
+
+                        Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
+                    }
                 }
             }
         }
