@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<OutputPath>..\..\BuildDrop\Plugins</OutputPath>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<PublishTrimmed>true</PublishTrimmed>
+		<PublishReadyToRun>true</PublishReadyToRun>
+		<PublishSingleFile>true</PublishSingleFile>
+		<TrimUnusedDependencies>true</TrimUnusedDependencies>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\ModelConverter\ModelConverter.csproj">
+		  <Private>False</Private>
+		  <CopyLocalSatelliteAssemblies>False</CopyLocalSatelliteAssemblies>
+		</ProjectReference>
+	</ItemGroup>
+</Project>

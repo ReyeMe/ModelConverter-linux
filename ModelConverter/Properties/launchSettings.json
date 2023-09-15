@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ModelConverter": {
+      "commandName": "Project",
+      "commandLineArgs": "-help"
+    }
+  }
+}
