@@ -117,17 +117,15 @@
                 {
                     if (string.IsNullOrEmpty(argument.Alternative))
                     {
-                        Console.Write(string.Format("\t-{0}", argument.Name));
-                        Console.CursorLeft = 0;
-
                         Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
+                        Console.CursorLeft = 0;
+                        Console.Write(string.Format("\t-{0}", argument.Name));
                     }
                     else
                     {
-                        Console.Write(string.Format("\t-{0}, -{1}", argument.Name, argument.Alternative));
-                        Console.CursorLeft = 0;
-
                         Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
+                        Console.CursorLeft = 0;
+                        Console.Write(string.Format("\t-{0}, -{1}", argument.Name, argument.Alternative));
                     }
                 }
             }

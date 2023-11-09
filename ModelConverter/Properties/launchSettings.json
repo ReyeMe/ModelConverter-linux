@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "-help"
+      "commandLineArgs": "-plugins"
     }
   }
 }

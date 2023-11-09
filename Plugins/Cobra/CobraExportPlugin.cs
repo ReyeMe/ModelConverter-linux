@@ -1,4 +1,4 @@
-﻿namespace Tmf
+﻿namespace Cobra
 {
     using ModelConverter.Geometry;
     using ModelConverter.PluginLoader;
@@ -10,8 +10,8 @@
     /// <summary>
     /// Export plugin for Tank Game
     /// </summary>
-    [Plugin("TankGame", "Export for sega Saturn game \"TankGame\"", ".TMF")]
-    public class TankModelFormatExportPlugin : ModelConverter.PluginLoader.IExportPlugin
+    [Plugin("Cobra", "Export for sega Saturn game by \"Cobra!\"", ".CBR")]
+    public class CobraExportPlugin : ModelConverter.PluginLoader.IExportPlugin
     {
         /// <summary>
         /// Vertices scale
@@ -22,7 +22,7 @@
         /// Initializes a new instance of the <see cref="TankModelFormatExportPlugin"/> class
         /// </summary>
         /// <param name="settings">Application settings</param>
-        public TankModelFormatExportPlugin(ModelConverter.ArgumentSettings settings)
+        public CobraExportPlugin(ModelConverter.ArgumentSettings settings)
         {
             // Do nothing
         }
@@ -38,30 +38,28 @@
             try
             {
                 // Check model integrity
-                if (model.Count > byte.MaxValue)
+                if (model.Count > ushort.MaxValue)
                 {
-                    throw new Exception("Maximum number of models in one file can be 256!");
+                    throw new Exception("Maximum number of models in one file can be 65536!");
                 }
                 else if (model.Count == 0)
                 {
                     throw new Exception("File does not contain any models");
                 }
-                else if (model.MaterialTextures.Count > byte.MaxValue)
+                else if (model.MaterialTextures.Count > ushort.MaxValue)
                 {
-                    throw new Exception("Maximum number of textures refereced in one file can be 256!");
+                    throw new Exception("Maximum number of textures refereced in one file can be 65536!");
                 }
 
-                TmfHeader header = new TmfHeader
+                CobraHeader header = new CobraHeader
                 {
-                    Type = TmFType.Static,
                     TextureCount = (byte)model.MaterialTextures.Count,
                     ModelCount = (byte)model.Count,
-                    Reserved = Enumerable.Repeat((byte)0x00, 5).ToArray(),
-                    Textures = model.MaterialTextures.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value)).ToArray(),
-                    Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, model.MaterialTextures, model.Vertices, model.Normals)).ToArray()
+                    Materials = model.MaterialTextures.Select(material => CobraExportPlugin.GetTextureEntry(material.Value)).ToArray(),
+                    Objects = model.Select(item => CobraExportPlugin.GetModelEntry(item, model.MaterialTextures, model.Vertices, model.Normals)).ToArray()
                 };
 
-                File.WriteAllBytes(outputFile, TankModelFormatExportPlugin.GetBytes(header));
+                File.WriteAllBytes(outputFile, CobraExportPlugin.GetBytes(header));
 
                 return true;
             }
@@ -91,7 +89,7 @@
 
                     if (value != null)
                     {
-                        bytes.AddRange(TankModelFormatExportPlugin.GetBytes(value));
+                        bytes.AddRange(CobraExportPlugin.GetBytes(value));
                     }
                 }
             }
@@ -101,12 +99,12 @@
                 {
                     foreach (object item in (Array)data)
                     {
-                        bytes.AddRange(TankModelFormatExportPlugin.GetBytes(item));
+                        bytes.AddRange(CobraExportPlugin.GetBytes(item));
                     }
                 }
                 else if (dataType.IsEnum)
                 {
-                    bytes.Add((byte)data);
+                    bytes.AddRange(CobraExportPlugin.GetBytes((ushort)data));
                 }
                 else
                 {
@@ -132,15 +130,15 @@
         /// <param name="localVertices">Local vertices</param>
         /// <param name="normals">Global normals</param>
         /// <returns>Face entry</returns>
-        private static TmfFace GetFaceEntry(
+        private static CobraFace GetFaceEntry(
                     Face face,
                     Dictionary<string, Material> materials,
                     List<Vector3D> vertices,
-                    Dictionary<int, TmfVertice> localVertices,
+                    Dictionary<int, CobraVertex> localVertices,
                     List<Vector3D> normals)
         {
             ushort[] indexes = face.Vertices
-                .Select(vertice => TankModelFormatExportPlugin.GetVerticeEntry(
+                .Select(vertice => CobraExportPlugin.GetVerticeEntry(
                     vertice,
                     localVertices,
                     vertices[vertice].X,
@@ -168,22 +166,22 @@
                 throw new Exception(string.Format("Material '{0}' is missing", face.Material));
             }
 
-            TmfFace entry = new TmfFace
+            CobraFace entry = new CobraFace
             {
                 TextureIndex = (byte)materialIndex,
                 Indexes = indexes,
-                Normal = TankModelFormatExportPlugin.GetVertice(faceVector.X, faceVector.Y, faceVector.Z),
-                Flags = TmfFaceFlags.None
+                Normal = CobraExportPlugin.GetVertice(faceVector.X, faceVector.Y, faceVector.Z),
+                Flags = CobraFaceFlags.None
             };
 
             if (face.IsMesh)
             {
-                entry.Flags |= TmfFaceFlags.Meshed;
+                entry.Flags |= CobraFaceFlags.Meshed;
             }
 
             if (face.IsDoubleSided)
             {
-                entry.Flags |= TmfFaceFlags.DoubleSided;
+                entry.Flags |= CobraFaceFlags.DoubleSided;
             }
 
             return entry;
@@ -197,17 +195,17 @@
         /// <param name="vertices">Global model vertices</param>
         /// <param name="normals">Global normals</param>
         /// <returns>Model entry</returns>
-        private static TmfModelHeader GetModelEntry(
+        private static CobraObject GetModelEntry(
             Model model,
             Dictionary<string, Material> materials,
             List<Vector3D> vertices,
             List<Vector3D> normals)
         {
-            Dictionary<int, TmfVertice> localVertices = new Dictionary<int, TmfVertice>();
-            TmfFace[] faces = model.Faces.Select(face => TankModelFormatExportPlugin.GetFaceEntry(face, materials, vertices, localVertices, normals)).ToArray();
-            TmfVertice[] modelVertices = localVertices.Values.ToArray();
+            Dictionary<int, CobraVertex> localVertices = new Dictionary<int, CobraVertex>();
+            CobraFace[] faces = model.Faces.Select(face => CobraExportPlugin.GetFaceEntry(face, materials, vertices, localVertices, normals)).ToArray();
+            CobraVertex[] modelVertices = localVertices.Values.ToArray();
 
-            return new TmfModelHeader
+            return new CobraObject
             {
                 FaceCount = (ushort)faces.Length,
                 VerticesCount = (ushort)modelVertices.Length,
@@ -221,28 +219,19 @@
         /// </summary>
         /// <param name="material">Face material</param>
         /// <returns>Texture entry</returns>
-        private static TmfTextureEntry GetTextureEntry(Material material)
+        private static CobraMaterial GetTextureEntry(Material material)
         {
-            TmfTextureEntry entry = new TmfTextureEntry();
+            CobraMaterial entry = new();
 
             if (!string.IsNullOrWhiteSpace(material.TexturePath))
             {
                 string file = Path.GetFileName(material.TexturePath).ToUpper();
                 byte[] bytes = Encoding.ASCII.GetBytes(file).Take(13).ToArray();
-                entry.Length = (byte)file.Length;
-                entry.FileName = bytes.Concat(Enumerable.Repeat(byte.MinValue, 13 - bytes.Length)).ToArray();
-                entry.Color = Enumerable.Repeat(byte.MaxValue, 3).ToArray();
+                entry.Data = bytes.Concat(Enumerable.Repeat(byte.MinValue, 16 - bytes.Length)).ToArray();
             }
             else
             {
-                entry.Length = 0;
-                entry.FileName = Enumerable.Repeat(byte.MinValue, 13).ToArray();
-                entry.Color = new byte[]
-                {
-                    material.Color.R,
-                    material.Color.G,
-                    material.Color.B
-                };
+                entry.Data = new byte[] { 0, material.Color.R, material.Color.G, material.Color.B }.Concat(Enumerable.Repeat(byte.MinValue, 12)).ToArray();
             }
 
             return entry;
@@ -255,13 +244,13 @@
         /// <param name="y">Y coordinate</param>
         /// <param name="z">Z coordinate</param>
         /// <returns>Vertice data</returns>
-        private static TmfVertice GetVertice(double x, double y, double z)
+        private static CobraVertex GetVertice(double x, double y, double z)
         {
-            return new TmfVertice
+            return new CobraVertex
             {
-                X = (Int32)(x * TankModelFormatExportPlugin.DoubleScale),
-                Y = (Int32)(y * TankModelFormatExportPlugin.DoubleScale),
-                Z = (Int32)(z * TankModelFormatExportPlugin.DoubleScale),
+                X = (Int32)(x * CobraExportPlugin.DoubleScale),
+                Y = (Int32)(y * CobraExportPlugin.DoubleScale),
+                Z = (Int32)(z * CobraExportPlugin.DoubleScale),
             };
         }
 
@@ -274,13 +263,13 @@
         /// <param name="y">Y coordinate</param>
         /// <param name="z">Z coordinate</param>
         /// <returns>Vertice entry index</returns>
-        private static ushort GetVerticeEntry(int vertice, Dictionary<int, TmfVertice> localVertices, double x, double y, double z)
+        private static ushort GetVerticeEntry(int vertice, Dictionary<int, CobraVertex> localVertices, double x, double y, double z)
         {
             int result;
 
             if (!localVertices.ContainsKey(vertice))
             {
-                localVertices.Add(vertice, TankModelFormatExportPlugin.GetVertice(x, y, z));
+                localVertices.Add(vertice, CobraExportPlugin.GetVertice(x, y, z));
             }
 
             result = localVertices.Keys.ToList().IndexOf(vertice);
