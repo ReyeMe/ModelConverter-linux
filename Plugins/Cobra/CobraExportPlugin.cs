@@ -83,7 +83,7 @@
 
             if (dataType.IsValueType && !dataType.IsPrimitive && !dataType.IsEnum)
             {
-                foreach (FieldInfo field in dataType.GetFields().OrderBy(field => Marshal.OffsetOf(dataType, field.Name).ToInt32()))
+                foreach (FieldInfo field in dataType.GetFields().OrderBy(field => field.MetadataToken))
                 {
                     object? value = field.GetValue(data);
 
@@ -163,7 +163,14 @@
 
             if (materialIndex < 0)
             {
-                throw new Exception(string.Format("Material '{0}' is missing", face.Material));
+                if (materials.Keys.Any(material => string.IsNullOrWhiteSpace(material)))
+                {
+                    materialIndex =  materials.Keys.ToList().IndexOf(materials.Keys.First(material => string.IsNullOrWhiteSpace(material)));
+                }
+                else
+                {
+                    throw new Exception(string.Format("Material '{0}' is missing", face.Material));
+                }
             }
 
             CobraFace entry = new CobraFace
