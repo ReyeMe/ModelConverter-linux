@@ -9,12 +9,17 @@
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
     {
         /// <summary>
+        /// Model scale
+        /// </summary>
+        private double scale = 1.0;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="WavefrontImportPlugin"/> class
         /// </summary>
         /// <param name="settings">Application settings</param>
         public WavefrontImportPlugin(ModelConverter.ArgumentSettings settings)
         {
-            // Do nothing
+            this.scale = settings.Scale ?? 1.0;
         }
 
         /// <summary>
@@ -42,7 +47,7 @@
                         break;
 
                     case "v":
-                        models.Vertices.Add(WavefrontImportPlugin.ParseVertex(line));
+                        models.Vertices.Add(WavefrontImportPlugin.ParseVertex(line, this.scale));
                         break;
 
                     case "vn":
@@ -144,8 +149,9 @@
         /// Parse vertex
         /// </summary>
         /// <param name="line">Vertex line</param>
+        /// <param name="scale">Vertex scale</param>
         /// <returns>Parsed vertex</returns>
-        private static Vector3D ParseVertex(string line)
+        private static Vector3D ParseVertex(string line, double scale = 1.0)
         {
             List<double> coordinates = line
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
@@ -155,7 +161,7 @@
                 {
                     double value = 0.0;
                     double.TryParse(coordinate, System.Globalization.NumberStyles.Any, CultureInfo.InvariantCulture, out value);
-                    return value;
+                    return value * scale;
                 })
                 .ToList();
 
