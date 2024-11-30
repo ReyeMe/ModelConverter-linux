@@ -61,6 +61,12 @@
         /// Texture index
         /// </summary>
         public byte TextureIndex;
+
+        /// <summary>
+        /// Byte padding
+        /// </summary>
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+        public byte[] Padding;
     }
 
     /// <summary>
@@ -134,11 +140,6 @@
     [StructLayout(LayoutKind.Sequential)]
     public struct TmfTextureEntry
     {
-        /// <summary>
-        /// Length of the file name
-        /// </summary>
-        public byte Length;
-
         /// <summary>
         /// File name
         /// </summary>

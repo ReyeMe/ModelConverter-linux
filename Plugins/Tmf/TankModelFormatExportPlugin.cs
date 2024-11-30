@@ -51,18 +51,29 @@
                     throw new Exception("Maximum number of textures refereced in one file can be 256!");
                 }
 
+                // Sort materials by putting textures first.
+                // This will make it so that indexes pointing to the texture are aligned properly,
+                // and not point to something that does not exist
+                Dictionary<string, Material> sortedMaterials = model.MaterialTextures
+                    .OrderBy(material => string.IsNullOrEmpty(material.Value.TexturePath)).ToDictionary(material => material.Key, material => material.Value);
+
+                // Generate model binary
                 TmfHeader header = new TmfHeader
                 {
                     Type = TmFType.Static,
                     TextureCount = (byte)model.MaterialTextures.Count,
                     ModelCount = (byte)model.Count,
                     Reserved = Enumerable.Repeat((byte)0x00, 5).ToArray(),
-                    Textures = model.MaterialTextures.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value)).ToArray(),
-                    Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, model.MaterialTextures, model.Vertices, model.Normals)).ToArray()
+                    Textures = sortedMaterials.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value)).ToArray(),
+                    Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, sortedMaterials, model.Vertices, model.Normals)).ToArray()
                 };
 
                 File.WriteAllBytes(outputFile, TankModelFormatExportPlugin.GetBytes(header));
 
+                // Report model statistics
+                TankModelFormatExportPlugin.GenerateReport(ref header);
+
+                // Return success
                 return true;
             }
             catch (Exception ex)
@@ -71,6 +82,46 @@
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Model report
+        /// </summary>
+        /// <param name="header">Model header</param>
+        private static void GenerateReport(ref TmfHeader header)
+        {
+            ConsoleColor bg = Console.BackgroundColor;
+            ConsoleColor fg = Console.ForegroundColor;
+
+            int textures = header.Textures.Count(texture => texture.FileName[0] != '\0');
+
+            Console.WriteLine();
+            Console.BackgroundColor = fg;
+            Console.ForegroundColor = bg;
+            Console.WriteLine(" Model export report                 ");
+            Console.BackgroundColor = bg;
+            Console.ForegroundColor = fg;
+            Console.WriteLine(" Type:\t\t\t| {0}", header.Type.ToString());
+            Console.WriteLine(" Objects:\t\t| {0}", header.ModelCount);
+            Console.WriteLine(" Materials:\t\t| {0}", header.TextureCount);
+            Console.WriteLine(" Textures:\t\t| {0}", textures);
+            Console.WriteLine(" Total vertices:\t| {0}", header.ModelCount > 0 ? header.Models.Sum(model => model.VerticesCount) : 0);
+            Console.WriteLine(" Total faces:\t\t| {0}", header.ModelCount > 0 ? header.Models.Sum(model => model.FaceCount) : 0);
+            Console.WriteLine();
+
+            if (textures > 0)
+            {
+                Console.BackgroundColor = fg;
+                Console.ForegroundColor = bg;
+                Console.WriteLine(" Used textures                       ");
+                Console.BackgroundColor = bg;
+                Console.ForegroundColor = fg;
+
+                string[] names = header.Textures.Where(texture => texture.FileName[0] != '\0').Select(texture => Encoding.ASCII.GetString(texture.FileName)).ToArray();
+                Console.WriteLine(" " + string.Join(", ", names));
+
+                Console.WriteLine();
+            }
         }
 
         /// <summary>
@@ -163,17 +214,13 @@
 
             int materialIndex = materials.Keys.ToList().IndexOf(face.Material);
 
-            if (materialIndex < 0)
-            {
-                throw new Exception(string.Format("Material '{0}' is missing", face.Material));
-            }
-
             TmfFace entry = new TmfFace
             {
-                TextureIndex = (byte)materialIndex,
+                TextureIndex = (byte)Math.Max(materialIndex, 0),
                 Indexes = indexes,
                 Normal = TankModelFormatExportPlugin.GetVertice(faceVector.X, faceVector.Y, faceVector.Z),
-                Flags = TmfFaceFlags.None
+                Flags = TmfFaceFlags.None,
+                Padding = Enumerable.Repeat((byte)0x00, 2).ToArray()
             };
 
             if (face.IsMesh)
@@ -229,14 +276,12 @@
             {
                 string file = Path.GetFileName(material.TexturePath).ToUpper();
                 byte[] bytes = Encoding.ASCII.GetBytes(file).Take(13).ToArray();
-                entry.Length = (byte)file.Length;
-                entry.FileName = bytes.Concat(Enumerable.Repeat(byte.MinValue, 13 - bytes.Length)).ToArray();
+                entry.FileName = bytes.Concat(Enumerable.Repeat((byte)'\0', 13 - bytes.Length)).ToArray();
                 entry.Color = Enumerable.Repeat(byte.MaxValue, 3).ToArray();
             }
             else
             {
-                entry.Length = 0;
-                entry.FileName = Enumerable.Repeat(byte.MinValue, 13).ToArray();
+                entry.FileName = Enumerable.Repeat((byte)'\0', 13).ToArray();
                 entry.Color = new byte[]
                 {
                     material.Color.R,

@@ -3,6 +3,7 @@
     using ModelConverter.Geometry;
     using ModelConverter.Graphics;
     using ModelConverter.PluginLoader;
+    using System;
     using System.Globalization;
 
     [Plugin("Wavefront", "Wavefront .obj file importer", ".obj")]

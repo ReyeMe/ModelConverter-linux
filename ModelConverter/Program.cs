@@ -147,6 +147,7 @@
 
             Console.WriteLine("Using export plugin: " + exportPlugin.Name);
 
+            
             if (exportPlugin.ExportFile(group, settings.OuputFile, settings))
             {
                 Console.WriteLine("Export done.");

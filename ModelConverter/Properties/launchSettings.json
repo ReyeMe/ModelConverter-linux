@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "-plugins"
+      "commandLineArgs": "-s 10.0 -o \"D:\\Saturn\\joengine\\Projects\\Polygon Test - Copy\\cd\\TANK.TMF\" -i \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\Resources\\Models\\Tank-old\\tank.obj\""
     }
   }
 }
