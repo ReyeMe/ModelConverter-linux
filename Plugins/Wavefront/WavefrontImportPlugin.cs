@@ -51,6 +51,10 @@
                         models.Vertices.Add(WavefrontImportPlugin.ParseVertex(line, this.scale));
                         break;
 
+                    case "vt":
+                        models.Uv.Add(WavefrontImportPlugin.ParseVertex(line));
+                        break;
+
                     case "vn":
                         models.Normals.Add(WavefrontImportPlugin.ParseVertex(line));
                         break;
@@ -123,6 +127,14 @@
         {
             Face face = new Face { Material = material };
 
+            if (face.Material.LastIndexOf('.') > 0)
+            {
+                string flags = face.Material[face.Material.LastIndexOf('.')..].ToLower();
+
+                face.IsDoubleSided = flags.Contains('d');
+                face.IsMesh = flags.Contains('m');
+            }
+
             foreach (string vertex in line.Substring(1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
             {
                 string[] components = vertex.Split(new[] { '/' }, StringSplitOptions.None);
@@ -134,6 +146,18 @@
                     if (int.TryParse(components.First(), out temp))
                     {
                         face.Vertices.Add(temp - 1);
+                    }
+
+                    if (components.Length >= 2)
+                    {
+                        if (int.TryParse(components[1], out temp))
+                        {
+                            face.Uv.Add(temp - 1);
+                        }
+                        else
+                        {
+                            face.Uv.Add(-1);
+                        }
                     }
 
                     if (components.Length == 3 && int.TryParse(components.Last(), out temp))
@@ -165,6 +189,11 @@
                     return value * scale;
                 })
                 .ToList();
+
+            if (coordinates.Count < 3)
+            {
+                coordinates = coordinates.Concat(Enumerable.Repeat(0.0, 3 - coordinates.Count)).ToList();
+            }
 
             return new Vector3D(coordinates[0], coordinates[1], coordinates[2]);
         }

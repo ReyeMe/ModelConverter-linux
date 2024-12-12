@@ -2,7 +2,9 @@
 {
     using ModelConverter.Geometry;
     using ModelConverter.PluginLoader;
+    using System;
     using System.Collections.Generic;
+    using System.Drawing;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Text;
@@ -65,7 +67,7 @@
                     ModelCount = (byte)model.Count,
                     Reserved = Enumerable.Repeat((byte)0x00, 5).ToArray(),
                     Textures = sortedMaterials.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value)).ToArray(),
-                    Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, sortedMaterials, model.Vertices, model.Normals)).ToArray()
+                    Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, sortedMaterials, model.Vertices, model.Uv, model.Normals)).ToArray()
                 };
 
                 File.WriteAllBytes(outputFile, TankModelFormatExportPlugin.GetBytes(header));
@@ -175,11 +177,47 @@
         }
 
         /// <summary>
+        /// Rotate array left
+        /// </summary>
+        /// <typeparam name="T">Array type</typeparam>
+        /// <param name="input">Input array</param>
+        /// <param name="ammount">Rotate amount</param>
+        /// <returns>Rotated array</returns>
+        private static T[] RotateLeft<T>(IEnumerable<T> input, int ammount)
+        {
+            T[] array = input.ToArray();
+            ammount = ammount % array.Length;
+            T[] buffer = new T[ammount];
+            Array.Copy(array, buffer, ammount);
+            Array.Copy(array, ammount, array, 0, array.Length - ammount);
+            Array.Copy(buffer, 0, array, array.Length - ammount, ammount);
+            return array;
+        }
+
+        /// <summary>
+        /// Polygon orientation
+        /// </summary>
+        /// <param name="polygon">Oriented polygon</param>
+        /// <returns>True if CW</returns>
+        private static bool IsClockwisePolygon(Vector3D[] polygon)
+        {
+            double sum = 0;
+
+            for (int i = 0; i < polygon.Length-1; i++)
+            {
+                sum += (polygon[i + 1].X - polygon[i].X) * (polygon[i + 1].Y + polygon[i].Y);
+            }
+
+            return (sum > 0) ? true : false;
+        }
+
+        /// <summary>
         /// Get face entry
         /// </summary>
         /// <param name="face">Model face</param>
         /// <param name="materials">Model materials</param>
         /// <param name="vertices">Global vertices</param>
+        /// <param name="uv">UV points</param>
         /// <param name="localVertices">Local vertices</param>
         /// <param name="normals">Global normals</param>
         /// <returns>Face entry</returns>
@@ -187,9 +225,11 @@
                     Face face,
                     Dictionary<string, Material> materials,
                     List<Vector3D> vertices,
+                    List<Vector3D> uv,
                     Dictionary<int, TmfVertice> localVertices,
                     List<Vector3D> normals)
         {
+            List<Vector3D> uvs = face.Uv.Any(id => id < 0) ? new() : face.Uv.Select(id => uv[id]).ToList();
             ushort[] indexes = face.Vertices
                 .Select(vertice => TankModelFormatExportPlugin.GetVerticeEntry(
                     vertice,
@@ -207,6 +247,35 @@
             if (indexes.Length != 4)
             {
                 throw new Exception("All faces must be quads!");
+            }
+
+            if (uvs.Any())
+            {
+                uvs = uvs.Concat(Enumerable.Repeat(uvs.Last(), 4 - uvs.Count)).ToList();
+
+                if (!TankModelFormatExportPlugin.IsClockwisePolygon(uvs.ToArray()))
+                {
+                    // We need to reverse polygon
+                    indexes.Reverse();
+                    uvs.Reverse();
+
+                    // we need to move start back to index 0
+                    indexes = TankModelFormatExportPlugin.RotateLeft(indexes, 3);
+                    uvs = TankModelFormatExportPlugin.RotateLeft(uvs, 3).ToList();
+                }
+
+                // Find origin
+                Vector3D max = new Vector3D(vertices.Max(v => v.X), vertices.Max(v => v.Y), vertices.Max(v => v.Z));
+
+                // Find start
+                Vector3D start = uvs.OrderBy(v => Math.Sqrt(Math.Pow(v.X - max.X, 2) + Math.Pow(v.Y - max.Y, 2) + Math.Pow(v.Z - max.Z, 2))).First();
+
+                // Find start index
+                int index = uvs.FindIndex(item => item == start);
+
+                // Rotate to start
+                uvs = TankModelFormatExportPlugin.RotateLeft(uvs.ToArray(), index + 1).ToList();
+                indexes = TankModelFormatExportPlugin.RotateLeft(indexes, index + 1);
             }
 
             Vector3D faceVector = face.Normals.Select(normal => normals[normal]).Aggregate((a, b) => a + b);
@@ -242,16 +311,18 @@
         /// <param name="model">3D model</param>
         /// <param name="materials">Model materials</param>
         /// <param name="vertices">Global model vertices</param>
+        /// <param name="uv">UV point</param>
         /// <param name="normals">Global normals</param>
         /// <returns>Model entry</returns>
         private static TmfModelHeader GetModelEntry(
             Model model,
             Dictionary<string, Material> materials,
             List<Vector3D> vertices,
+            List<Vector3D> uv,
             List<Vector3D> normals)
         {
             Dictionary<int, TmfVertice> localVertices = new Dictionary<int, TmfVertice>();
-            TmfFace[] faces = model.Faces.Select(face => TankModelFormatExportPlugin.GetFaceEntry(face, materials, vertices, localVertices, normals)).ToArray();
+            TmfFace[] faces = model.Faces.Select(face => TankModelFormatExportPlugin.GetFaceEntry(face, materials, vertices, uv, localVertices, normals)).ToArray();
             TmfVertice[] modelVertices = localVertices.Values.ToArray();
 
             return new TmfModelHeader

@@ -1,5 +1,7 @@
 ﻿namespace ModelConverter.Graphics
 {
+    using System.Diagnostics.CodeAnalysis;
+
     /// <summary>
     /// Color data
     /// </summary>
@@ -44,5 +46,15 @@
         /// Blue component
         /// </summary>
         public byte B { get; private set; }
+
+        /// <summary>
+        /// Custom equals
+        /// </summary>
+        /// <param name="obj">Other object</param>
+        /// <returns>True if same</returns>
+        public override bool Equals([NotNullWhen(true)] object? obj)
+        {
+            return (obj is Color color && color.R == this.R && color.B == this.B && color.G == this.G) || base.Equals(obj);
+        }
     }
 }

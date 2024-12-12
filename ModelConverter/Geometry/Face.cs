@@ -28,6 +28,11 @@
         public List<int> Normals { get; } = new List<int>();
 
         /// <summary>
+        /// Gets UV indices
+        /// </summary>
+        public List<int> Uv { get; } = new List<int>();
+
+        /// <summary>
         /// Gets vertices indices
         /// </summary>
         public List<int> Vertices { get; } = new List<int>();

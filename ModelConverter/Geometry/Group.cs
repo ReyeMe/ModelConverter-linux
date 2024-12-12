@@ -16,6 +16,11 @@
         public List<Vector3D> Normals { get; } = new List<Vector3D>();
 
         /// <summary>
+        /// Gets model UV points
+        /// </summary>
+        public List<Vector3D> Uv { get; } = new List<Vector3D>();
+
+        /// <summary>
         /// Gets model vertices
         /// </summary>
         public List<Vector3D> Vertices { get; } = new List<Vector3D>();

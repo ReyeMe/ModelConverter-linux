@@ -2,8 +2,10 @@
 {
     using ModelConverter.Geometry;
     using ModelConverter.ParameterParser;
+    using ModelConverter.PluginLoader;
     using System;
     using System.Diagnostics.CodeAnalysis;
+    using System.Runtime.CompilerServices;
 
     /// <summary>
     /// Main program class
@@ -64,9 +66,9 @@
                 Environment.Exit(0);
             }
 
-            if (string.IsNullOrEmpty(settings.InputFile) || !File.Exists(settings.InputFile))
+            if (settings.InputFile?.All(file => string.IsNullOrEmpty(file) || !File.Exists(file)) ?? false)
             {
-                Console.WriteLine("Input file is missing! Use --help or -h for help.");
+                Console.WriteLine("One or more of the input files are missing! Use --help or -h for help.");
                 Environment.Exit(0);
             }
 
@@ -77,45 +79,113 @@
             }
 
             // Start converting
-            Console.WriteLine(string.Format("Input file: {0}", settings.InputFile));
+            Console.WriteLine(string.Format("Input files:\n{0}", string.Join(", ", settings.InputFile ?? new[] { string.Empty })));
             Console.WriteLine(string.Format("Output file: {0}", settings.OuputFile));
 
-            PluginLoader.Plugin? importPlugin;
-
-            if (string.IsNullOrEmpty(settings.ImportPluginName))
+            List<(PluginLoader.Plugin, string)>? importPlugins = settings.InputFile?.Select(file =>
             {
-                importPlugin = plugins.Values
-                    .Where(plugin => plugin.Supports.HasFlag(PluginLoader.Plugin.Support.Import))
-                    .FirstOrDefault(plugin => settings.InputFile.EndsWith(plugin.Extension));
+                PluginLoader.Plugin? importPlugin = null;
 
-                if (importPlugin == null)
+                if (string.IsNullOrEmpty(settings.ImportPluginName))
                 {
-                    Console.WriteLine("No available plugin supports this file extension! Use -plugins to see available plugins.");
-                    Environment.Exit(0);
-                }
-            }
-            else
-            {
-                importPlugin = plugins.Values
-                    .Where(plugin => plugin.Supports.HasFlag(PluginLoader.Plugin.Support.Import))
-                    .FirstOrDefault(plugin => plugin.Name == settings.ImportPluginName);
+                    importPlugin = plugins.Values
+                        .Where(plugin => plugin.Supports.HasFlag(PluginLoader.Plugin.Support.Import))
+                        .FirstOrDefault(plugin => file.EndsWith(plugin.Extension));
 
-                if (importPlugin == null)
+                    if (importPlugin == null)
+                    {
+                        Console.WriteLine("No available plugin supports '." + Path.GetExtension(file) + "' file extension! Use -plugins to see available plugins.");
+                        Environment.Exit(0);
+                    }
+                }
+                else
                 {
-                    Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
-                    Environment.Exit(0);
+                    importPlugin = plugins.Values
+                        .Where(plugin => plugin.Supports.HasFlag(PluginLoader.Plugin.Support.Import))
+                        .FirstOrDefault(plugin => plugin.Name == settings.ImportPluginName);
+
+                    if (importPlugin == null)
+                    {
+                        Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
+                        Environment.Exit(0);
+                    }
                 }
-            }
 
-            Console.WriteLine("Using import plugin: " + importPlugin.Name);
+                return (importPlugin, file);
+            }).ToList();
 
-            // Import group
-            Group? group = importPlugin.ImportFile(settings.InputFile, settings);
+            Group? group = null;
 
-            if (group == null)
+            if (importPlugins?.Any() ?? false)
             {
-                Console.WriteLine("Import failed!");
-                Environment.Exit(0);
+                foreach ((PluginLoader.Plugin plugin, string file) import in importPlugins)
+                {
+                    Console.WriteLine("Using import plugin '" + import.plugin.Name + "' for '" + import.file + "'");
+
+                    // Import group
+                    Group? importedArtifact = import.plugin.ImportFile(import.file, settings);
+
+                    if (importedArtifact == null)
+                    {
+                        Console.WriteLine("Import failed!");
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        if (group == null)
+                        {
+                            // Set group
+                            group = importedArtifact;
+                        }
+                        else
+                        {
+                            // Merge group
+                            int vertexStart = group.Vertices.Count;
+                            group.Vertices.AddRange(importedArtifact.Vertices);
+
+                            int normalsStart = group.Normals.Count;
+                            group.Normals.AddRange(importedArtifact.Normals);
+
+                            int uvsStart = group.Uv.Count;
+                            group.Uv.AddRange(importedArtifact.Uv);
+
+                            // Merge materials
+                            foreach (KeyValuePair<string, Material> material in importedArtifact.MaterialTextures)
+                            {
+                                if (!group.MaterialTextures.ContainsKey(material.Key))
+                                {
+                                    group.MaterialTextures.Add(material.Key, material.Value);
+                                }
+                                else if (material.Value.Color.Equals(group.MaterialTextures[material.Key].Color) &&
+                                    material.Value.TexturePath == group.MaterialTextures[material.Key].TexturePath)
+                                {
+                                    Console.WriteLine("Warning: Different material with same name '" + material.Key + "' already exists! First occurence is used...");
+                                }
+                            }
+
+                            // Merge models
+                            foreach (Model model in importedArtifact)
+                            {
+                                foreach (Face face in model.Faces)
+                                {
+                                    int[] vertices = face.Vertices.Select(id => id + vertexStart).ToArray();
+                                    face.Vertices.Clear();
+                                    face.Vertices.AddRange(vertices);
+
+                                    int[] uv = face.Uv.Select(id => id + uvsStart).ToArray();
+                                    face.Uv.Clear();
+                                    face.Uv.AddRange(uv);
+
+                                    int[] normals = face.Normals.Select(id => id + normalsStart).ToArray();
+                                    face.Normals.Clear();
+                                    face.Normals.AddRange(normals);
+                                }
+
+                                group.Add(model);
+                            }
+                        }
+                    }
+                }
             }
 
             PluginLoader.Plugin? exportPlugin;

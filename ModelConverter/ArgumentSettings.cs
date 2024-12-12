@@ -1,11 +1,13 @@
 ﻿namespace ModelConverter
 {
+    using System.Diagnostics.CodeAnalysis;
     using ParameterParser;
 
     /// <summary>
     /// Arguments view model
     /// </summary>
-    [CmdHelp("Tool to convert between multiple 3D file formats.\nUse: dotnet ./ModelConverter.dll -i [Input path] -o [Output path]")]
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+    [CmdHelp("Tool to convert between multiple 3D file formats.\nUse: dotnet ./ModelConverter.dll -i [Input path(s)] -o [Output path]")]
     public sealed class ArgumentSettings
     {
         /// <summary>
@@ -25,9 +27,9 @@
         /// <summary>
         /// Gets or sets input file path
         /// </summary>
-        [CmdHelp("Path to the input file. (eg.: -i \"work/models/test.obj\")")]
+        [CmdHelp("Path to the input file. (eg.: -i \"work/models/test.obj\") or multiple files (eg.: -i \"work/models/test1.obj\" \"work/models/test2.obj\")")]
         [CmdArgument("i")]
-        public string? InputFile { get; set; }
+        public string[]? InputFile { get; set; }
 
         /// <summary>
         /// Gets or sets input file path

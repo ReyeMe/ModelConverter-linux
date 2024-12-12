@@ -12,7 +12,7 @@
     /// Command line parser
     /// </summary>
     /// <typeparam name="ViewModel">View model to use as a base</typeparam>
-    internal static class Parser<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] ViewModel> where ViewModel : new()
+    internal static class Parser<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] ViewModel> where ViewModel : new()
     {
         /// <summary>
         /// First character of each argument
@@ -173,6 +173,72 @@
         }
 
         /// <summary>
+        /// Parse argument array
+        /// </summary>
+        /// <param name="property">Target property type</param>
+        /// <param name="values">Argument values</param>
+        /// <returns>Argument object</returns>
+        private static object? ParseArrayArgument(PropertyInfo property, string[] values)
+        {
+            Type elementType = property.PropertyType.GetElementType() ?? typeof(string);
+
+            if (elementType == typeof(bool))
+            {
+                return values.Select(value => value.ToLower() == "true").ToArray();
+            }
+            else if (elementType == typeof(string))
+            {
+                return values;
+            }
+            else if (elementType.IsEnum)
+            {
+                return values.Select(value =>
+                {
+                    object? enumValue = Enum.GetValues(elementType)
+                        .Cast<object>()
+                        .FirstOrDefault(enumVal => enumVal.ToString() == value);
+
+                    if (enumValue != null)
+                    {
+                        return enumValue;
+                    }
+                    else
+                    {
+                        throw new NotSupportedException(
+                            string.Format(
+                                "Value '{0}' was not found in '{1}' for property '{2}'",
+                                values[0],
+                                property.PropertyType.Name,
+                                property.Name));
+                    }
+
+                }).ToArray();
+            }
+            else if (property.PropertyType != null)
+            {
+                try
+                {
+                    return values.Select(value => Convert.ChangeType(value, property.PropertyType)).ToArray();
+                }
+                catch (Exception ex)
+                {
+                    return new NotSupportedException(
+                        string.Format(
+                            "Conversion of property '{0}' of type '{1}' from string is not supported!",
+                            property.Name,
+                            property.PropertyType.Name),
+                        ex);
+                }
+            }
+
+            return new NotSupportedException(
+                string.Format(
+                    "Conversion of property '{0}' of type '{1}' from string is not supported!",
+                    property.Name,
+                    property.PropertyType?.Name ?? "unknown"));
+        }
+
+        /// <summary>
         /// Parse argument
         /// </summary>
         /// <param name="property">Target property type</param>
@@ -180,7 +246,11 @@
         /// <returns>Argument object</returns>
         private static object? ParseArgument(PropertyInfo property, string[] values)
         {
-            if (values.Length > 1)
+            if (property.PropertyType.IsArray)
+            {
+                return Parser<ViewModel>.ParseArrayArgument(property, values);
+            }
+            else if (values.Length > 1)
             {
                 throw new NotSupportedException(
                     string.Format(
@@ -234,11 +304,28 @@
                             property.Name));
                 }
             }
-            else
+            else if (property.PropertyType != null)
             {
-                TypeConverter converter = new();
-                return converter.ConvertFromInvariantString(values[0]);
+                try
+                {
+                    return Convert.ChangeType(values[0], property.PropertyType);
+                }
+                catch (Exception ex)
+                {
+                    return new NotSupportedException(
+                        string.Format(
+                            "Conversion of property '{0}' of type '{1}' from string is not supported!",
+                            property.Name,
+                            property.PropertyType.Name),
+                        ex);
+                }
             }
+
+            return new NotSupportedException(
+                string.Format(
+                    "Conversion of property '{0}' of type '{1}' from string is not supported!",
+                    property.Name,
+                    property.PropertyType?.Name ?? "unknown"));
         }
     }
 }
