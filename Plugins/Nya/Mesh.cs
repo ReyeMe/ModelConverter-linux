@@ -56,18 +56,9 @@
 
             // Read flags
             faceFlag.HasTexture = group.MaterialTextures[face.Material] is TextureReferenceMaterial || group.MaterialTextures[face.Material] is TextureMaterial;
-
-            // Read user flags
-            int separator = face.Material.LastIndexOf('_');
-
-            if (separator > 0 && face.Material[separator] == '_')
-            {
-                HashSet<char> flags = face.Material.Substring(separator + 1).Where(letter => char.IsLetter(letter) && char.IsUpper(letter)).ToHashSet();
-
-                faceFlag.HasMeshEffect = flags.Contains('M');
-                faceFlag.IsDoubleSided = flags.Contains('D');
-                faceFlag.IsHalfTransparent = flags.Contains('H');
-            }
+            faceFlag.IsDoubleSided = face.IsDoubleSided;
+            faceFlag.IsHalfTransparent = face.IsHalfTransparent;
+            faceFlag.HasMeshEffect = face.IsMesh;
 
             // Read polygon
             Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, textures, ref vertices, ref uvTextures);

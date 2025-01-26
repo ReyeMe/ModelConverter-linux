@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "-o \"D:\\VisualStudio\\PawCraft\\BuildDrop\\Assets\\Models\\test.NYA\" -i \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\Resources\\Models\\Tank\\tank.obj\""
+      "commandLineArgs": "-h"
     }
   }
 }

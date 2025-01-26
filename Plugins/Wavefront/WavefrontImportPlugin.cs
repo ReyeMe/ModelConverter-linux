@@ -5,6 +5,7 @@
     using ModelConverter.PluginLoader;
     using System;
     using System.Globalization;
+    using System.Security.AccessControl;
 
     [Plugin("Wavefront", "Wavefront .obj file importer", ".obj", typeof(ObjArguments))]
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
@@ -127,12 +128,16 @@
         {
             Face face = new Face { Material = material };
 
-            if (face.Material.LastIndexOf('.') > 0)
-            {
-                string flags = face.Material[face.Material.LastIndexOf('.')..].ToLower();
+            // Read user flags
+            int separator = face.Material.LastIndexOf('_');
 
-                face.IsDoubleSided = flags.Contains('d');
-                face.IsMesh = flags.Contains('m');
+            if (separator > 0 && face.Material[separator] == '_')
+            {
+                HashSet<char> flags = face.Material.Substring(separator + 1).Where(letter => char.IsLetter(letter) && char.IsUpper(letter)).ToHashSet();
+
+                face.IsMesh = flags.Contains('M');
+                face.IsDoubleSided = flags.Contains('D');
+                face.IsHalfTransparent = flags.Contains('H');
             }
 
             foreach (string vertex in line.Substring(1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))

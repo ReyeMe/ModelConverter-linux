@@ -18,6 +18,11 @@
         public bool IsMesh { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether face is rendered as half-transparent
+        /// </summary>
+        public bool IsHalfTransparent { get; set; }
+
+        /// <summary>
         /// Gets or sets material name
         /// </summary>
         public string Material { get; set; } = string.Empty;
