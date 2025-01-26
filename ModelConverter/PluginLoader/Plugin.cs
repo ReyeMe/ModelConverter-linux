@@ -1,9 +1,10 @@
 ﻿namespace ModelConverter.PluginLoader
 {
-    using ModelConverter.Geometry;
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
+    using ModelConverter.Geometry;
+    using ModelConverter.ParameterParser;
 
     /// <summary>
     /// Plugin descriptor
@@ -32,6 +33,7 @@
                 this.Extension = attribute.Extension;
 
                 this.type = pluginBaseClassType;
+                this.CustomArgumentsViewType = attribute.CustomArguments;
 
                 if (typeof(IExportPlugin).IsAssignableFrom(this.type))
                 {
@@ -76,6 +78,12 @@
         }
 
         /// <summary>
+        /// Custom type of the class holding cutom plugin arguments
+        /// </summary>
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+        internal Type? CustomArgumentsViewType { get; }
+
+        /// <summary>
         /// Gets plugin description
         /// </summary>
         internal string Description { get; }
@@ -101,20 +109,58 @@
         /// <param name="group"><see cref="Group"/> to export</param>
         /// <param name="file">File to export to</param>
         /// <param name="settings">Current argument settings</param>
+        /// <param name="args">Raw arguments</param>
         /// <returns><see langword="true"/> on success</returns>
-        internal bool ExportFile(Group group, string file, ArgumentSettings settings)
+        internal bool ExportFile(Group group, string file, ArgumentSettings settings, string[] args)
         {
             bool result = false;
 
             if (typeof(IExportPlugin).IsAssignableFrom(this.type))
             {
-                IExportPlugin? exportPLugin = Activator.CreateInstance(this.type, new[] { settings }) as IExportPlugin;
+                IExportPlugin? exportPlugin = null;
 
-                if (exportPLugin != null)
+                if (this.CustomArgumentsViewType != null)
                 {
-                    result = exportPLugin.Export(group, file);
+                    try
+                    {
+                        object? pluginArgs = typeof(Parser<>).MakeGenericType(this.CustomArgumentsViewType)
+                            .GetMethod("Parse", BindingFlags.Public | BindingFlags.Static)?
+                            .Invoke(null, new[] { args });
 
-                    if (((object)exportPLugin) is IDisposable disposable)
+                        if (pluginArgs != null)
+                        {
+                            exportPlugin = Plugin.TryCreateInstance(this.type, new object[] { settings, pluginArgs }) as IExportPlugin;
+
+                            // Try simpler constructor
+                            if (exportPlugin == null)
+                            {
+                                exportPlugin = Plugin.TryCreateInstance(this.type, new object[] { pluginArgs }) as IExportPlugin;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.ToString();
+                    }
+                }
+
+                // Try simpler constructor
+                if (exportPlugin == null)
+                {
+                    exportPlugin = Plugin.TryCreateInstance(this.type, new object[] { settings }) as IExportPlugin;
+
+                    // Try empty constructor
+                    if (exportPlugin == null)
+                    {
+                        exportPlugin = Plugin.TryCreateInstance(this.type) as IExportPlugin;
+                    }
+                }
+
+                if (exportPlugin != null)
+                {
+                    result = exportPlugin.Export(group, file);
+
+                    if (((object)exportPlugin) is IDisposable disposable)
                     {
                         disposable.Dispose();
                     }
@@ -128,21 +174,59 @@
         /// Export file with this plugin
         /// </summary>
         /// <param name="file">File to export to</param>
-        /// <param name="settings">Current argument settings</param>
+        /// <param name="settings">Current parsed argument settings</param>
+        /// <param name="args">Raw arguments</param>
         /// <returns>Imported <see cref="Group"/></returns>
-        internal Group? ImportFile(string file, ArgumentSettings settings)
+        internal Group? ImportFile(string file, ArgumentSettings settings, string[] args)
         {
             Group? result = null;
 
             if (typeof(IImportPlugin).IsAssignableFrom(this.type))
             {
-                IImportPlugin? exportPLugin = Activator.CreateInstance(this.type, new[] { settings }) as IImportPlugin;
+                IImportPlugin? importPlugin = null;
 
-                if (exportPLugin != null)
+                if (this.CustomArgumentsViewType != null)
                 {
-                    result = exportPLugin.Import(file);
+                    try
+                    {
+                        object? pluginArgs = typeof(Parser<>).MakeGenericType(this.CustomArgumentsViewType)
+                            .GetMethod("Parse", BindingFlags.Public | BindingFlags.Static)?
+                            .Invoke(null, new[] { args });
 
-                    if (((object)exportPLugin) is IDisposable disposable)
+                        if (pluginArgs != null)
+                        {
+                            importPlugin = Plugin.TryCreateInstance(this.type, new object[] { settings, pluginArgs }) as IImportPlugin;
+
+                            // Try simpler constructor
+                            if (importPlugin == null)
+                            {
+                                importPlugin = Plugin.TryCreateInstance(this.type, new object[] { pluginArgs }) as IImportPlugin;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.ToString();
+                    }
+                }
+
+                // Try simpler constructor
+                if (importPlugin == null)
+                {
+                    importPlugin = Plugin.TryCreateInstance(this.type, new object[] { settings }) as IImportPlugin;
+
+                    // Try empty constructor
+                    if (importPlugin == null)
+                    {
+                        importPlugin = Plugin.TryCreateInstance(this.type) as IImportPlugin;
+                    }
+                }
+
+                if (importPlugin != null)
+                {
+                    result = importPlugin.Import(file);
+
+                    if (((object)importPlugin) is IDisposable disposable)
                     {
                         disposable.Dispose();
                     }
@@ -150,6 +234,65 @@
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Print plugin specific help
+        /// </summary>
+        internal void PrintHelp()
+        {
+            if (this.CustomArgumentsViewType != null)
+            {
+                try
+                {
+                    object? pluginArgs = typeof(Parser<>).MakeGenericType(this.CustomArgumentsViewType)
+                        .GetMethod("PrintHelp", BindingFlags.Public | BindingFlags.Static)?.Invoke(null, null);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("An error has occured while retrieving help page.\n\n" + ex.ToString());
+                }
+            }
+            else
+            {
+                Console.WriteLine("Plugin has no settings.");
+            }
+        }
+
+        /// <summary>
+        /// Create object instance from type
+        /// </summary>
+        /// <param name="type">Object type</param>
+        /// <param name="args">Constructor arguments</param>
+        /// <returns>Object instance or <see langword="null"/></returns>
+        private static object? TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type)
+        {
+            try
+            {
+                return Activator.CreateInstance(type);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Create object instance from type
+        /// </summary>
+        /// <param name="type">Object type</param>
+        /// <param name="args">Constructor arguments</param>
+        /// <returns>Object instance or <see langword="null"/></returns>
+        private static object? TryCreateInstance([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type type, params object?[]? args)
+        {
+            try
+            {
+                return Activator.CreateInstance(type, args);
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

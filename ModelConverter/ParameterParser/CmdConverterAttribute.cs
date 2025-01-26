@@ -6,7 +6,7 @@
     /// Converter attribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    internal abstract class CmdConverterAttribute : Attribute
+    public abstract class CmdConverterAttribute : Attribute
     {
         /// <summary>
         /// Convert set of argument values into a single object

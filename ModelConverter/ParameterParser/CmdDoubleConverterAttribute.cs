@@ -6,7 +6,7 @@
     /// <summary>
     /// Double converter
     /// </summary>
-    internal class CmdDoubleConverterAttribute : CmdConverterAttribute
+    public class CmdDoubleConverterAttribute : CmdConverterAttribute
     {
         /// <summary>
         /// Default value

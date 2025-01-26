@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Diagnostics.CodeAnalysis;
+    using System.Diagnostics.Metrics;
     using System.Linq;
     using System.Reflection;
 
@@ -12,7 +13,7 @@
     /// Command line parser
     /// </summary>
     /// <typeparam name="ViewModel">View model to use as a base</typeparam>
-    internal static class Parser<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] ViewModel> where ViewModel : new()
+    public static class Parser<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] ViewModel> where ViewModel : new()
     {
         /// <summary>
         /// First character of each argument
@@ -50,38 +51,45 @@
                         throw new MissingMethodException(string.Format("Property '{0}' does not have set method.", property.Name));
                     }
 
-                    // Check whether argument we want exists and whether it is required
-                    if (foundArguments.ContainsKey(argument.Name))
+                    try
                     {
-                        CmdConverterAttribute? converter = property.GetCustomAttribute<CmdConverterAttribute>();
+                        // Check whether argument we want exists and whether it is required
+                        if (foundArguments.ContainsKey(argument.Name))
+                        {
+                            CmdConverterAttribute? converter = property.GetCustomAttribute<CmdConverterAttribute>();
 
-                        // Check whether we will use default conversion or not
-                        if (converter != null)
-                        {
-                            property.SetValue(model, converter.Convert(foundArguments[argument.Name]));
+                            // Check whether we will use default conversion or not
+                            if (converter != null)
+                            {
+                                property.SetValue(model, converter.Convert(foundArguments[argument.Name]));
+                            }
+                            else
+                            {
+                                property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Name]));
+                            }
                         }
-                        else
+                        else if (foundArguments.ContainsKey(argument.Alternative))
                         {
-                            property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Name]));
+                            CmdConverterAttribute? converter = property.GetCustomAttribute<CmdConverterAttribute>();
+
+                            // Check whether we will use default conversion or not
+                            if (converter != null)
+                            {
+                                property.SetValue(model, converter.Convert(foundArguments[argument.Alternative]));
+                            }
+                            else
+                            {
+                                property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Alternative]));
+                            }
+                        }
+                        else if (argument.IsRequired)
+                        {
+                            throw new KeyNotFoundException(string.Format("Argument '{0}' on property '{1}' is required.", argument.Name, property.Name));
                         }
                     }
-                    else if (foundArguments.ContainsKey(argument.Alternative))
+                    catch (Exception ex)
                     {
-                        CmdConverterAttribute? converter = property.GetCustomAttribute<CmdConverterAttribute>();
-
-                        // Check whether we will use default conversion or not
-                        if (converter != null)
-                        {
-                            property.SetValue(model, converter.Convert(foundArguments[argument.Alternative]));
-                        }
-                        else
-                        {
-                            property.SetValue(model, Parser<ViewModel>.ParseArgument(property, foundArguments[argument.Alternative]));
-                        }
-                    }
-                    else if (argument.IsRequired)
-                    {
-                        throw new KeyNotFoundException(string.Format("Argument '{0}' on property '{1}' is required.", argument.Name, property.Name));
+                        Console.WriteLine($"Warning: {ex.Message}");
                     }
                 }
             }
@@ -106,6 +114,7 @@
             }
 
             Console.WriteLine();
+            int width = Math.Max(Console.WindowWidth - 20, 30);
 
             foreach (PropertyInfo property in properties)
             {
@@ -117,18 +126,92 @@
                 {
                     if (string.IsNullOrEmpty(argument.Alternative))
                     {
-                        Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
-                        Console.CursorLeft = 0;
-                        Console.Write(string.Format("\t-{0}", argument.Name));
+                        Console.CursorLeft = 3;
+                        Console.Write(string.Format("-{0}", argument.Name));
+                        Parser<ViewModel>.PrintMultiline(help.Text, width);
                     }
                     else
                     {
-                        Console.WriteLine(string.Format("\t\t\t\t{0}\n", help.Text));
-                        Console.CursorLeft = 0;
-                        Console.Write(string.Format("\t-{0}, -{1}", argument.Name, argument.Alternative));
+                        Console.CursorLeft = 3;
+                        Console.Write(string.Format("-{0}, -{1}", argument.Name, argument.Alternative));
+                        PrintMultiline(help.Text, width);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Split text
+        /// </summary>
+        /// <param name="str">Text string</param>
+        /// <param name="chunkSize">Chunk size</param>
+        /// <returns>Text split</returns>
+        private static void PrintMultiline(string str, int maxLength)
+        {
+            string noTab = str.Replace('\t', ' ');
+            List<string> lines = new List<string> { string.Empty };
+
+            for (int letter = 0; letter < str.Length; letter++)
+            {
+                if (noTab[letter] == '\n')
+                {
+                    lines.Add(string.Empty);
+                }
+                else if (noTab[letter] == ' ')
+                {
+                    if (lines.Last().Length >= maxLength)
+                    {
+                        lines.Add(string.Empty);
+                    }
+
+                    lines[lines.Count - 1] += ' ';
+                }
+                else
+                {
+                    string word = string.Empty;
+
+                    for (int wordLetter = letter; wordLetter < str.Length && noTab[wordLetter] != ' ' && noTab[wordLetter] != '\n'; wordLetter++)
+                    {
+                        word += noTab[wordLetter];
+                    }
+
+                    // Breakable word
+                    if (word.Length >= maxLength)
+                    {
+                        for (int start = 0; start < word.Length; start++)
+                        {
+                            if (lines.Last().Length >= maxLength)
+                            {
+                                lines.Add(string.Empty);
+                            }
+
+                            lines[lines.Count - 1] += noTab[letter++];
+                        }
+
+                        letter--;
+                        continue;
+                    }
+                    else if (word.Length + lines.Last().Length >= maxLength)
+                    {
+                        lines.Add(string.Empty);
+                    }
+
+                    for (int start = 0; start < word.Length; start++)
+                    {
+                        lines[lines.Count - 1] += noTab[letter++];
+                    }
+
+                    letter--;
+                }
+            }
+
+            foreach (string line in lines)
+            {
+                Console.CursorLeft = 20;
+                Console.WriteLine($"{line}");
+            }
+
+            Console.WriteLine();
         }
 
         /// <summary>
@@ -267,6 +350,14 @@
                         property.Name,
                         property.PropertyType.Name));
             }
+            else if (property.PropertyType == typeof(bool) && values.Length < 1)
+            {
+                return true;
+            }
+            else if (property.PropertyType == typeof(string))
+            {
+                return values?.Any() ?? false ? values[0] : string.Empty;
+            }
             else if (property.PropertyType != typeof(bool) && values.Length < 1)
             {
                 throw new NotSupportedException(
@@ -275,20 +366,11 @@
                         property.Name,
                         property.PropertyType.Name));
             }
-
-            if (property.PropertyType == typeof(bool) && values.Length < 1)
-            {
-                return true;
-            }
-            else if (property.PropertyType == typeof(string))
-            {
-                return values[0];
-            }
-            else if (property.PropertyType.IsEnum)
+            else if (property.PropertyType.IsEnum && values.Length > 0)
             {
                 object? enumValue = Enum.GetValues(property.PropertyType)
                     .Cast<object>()
-                    .FirstOrDefault(value => value.ToString() == values[0]);
+                    .FirstOrDefault(value => value.ToString()?.ToLower() == values[0]?.ToLower());
 
                 if (enumValue != null)
                 {
@@ -304,7 +386,7 @@
                             property.Name));
                 }
             }
-            else if (property.PropertyType != null)
+            else if (property.PropertyType != null && values.Length > 0)
             {
                 try
                 {
@@ -312,7 +394,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return new NotSupportedException(
+                    throw new NotSupportedException(
                         string.Format(
                             "Conversion of property '{0}' of type '{1}' from string is not supported!",
                             property.Name,
@@ -321,7 +403,7 @@
                 }
             }
 
-            return new NotSupportedException(
+            throw new NotSupportedException(
                 string.Format(
                     "Conversion of property '{0}' of type '{1}' from string is not supported!",
                     property.Name,

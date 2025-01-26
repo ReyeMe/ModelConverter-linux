@@ -230,15 +230,16 @@
         {
             CobraMaterial entry = new();
 
-            if (!string.IsNullOrWhiteSpace(material.TexturePath))
+            if (material is TextureReferenceMaterial mat &&
+                !string.IsNullOrWhiteSpace(mat.TexturePath))
             {
-                string file = Path.GetFileName(material.TexturePath).ToUpper();
+                string file = Path.GetFileName(mat.TexturePath).ToUpper();
                 byte[] bytes = Encoding.ASCII.GetBytes(file).Take(13).ToArray();
                 entry.Data = bytes.Concat(Enumerable.Repeat(byte.MinValue, 16 - bytes.Length)).ToArray();
             }
             else
             {
-                entry.Data = new byte[] { 0, material.Color.R, material.Color.G, material.Color.B }.Concat(Enumerable.Repeat(byte.MinValue, 12)).ToArray();
+                entry.Data = new byte[] { 0, material.BaseColor.R, material.BaseColor.G, material.BaseColor.B }.Concat(Enumerable.Repeat(byte.MinValue, 12)).ToArray();
             }
 
             return entry;

@@ -10,7 +10,7 @@
         /// <summary>
         /// Export group as output file
         /// </summary>
-        /// <param name="group">Model group instance</param>
+        /// <param name="model">Model group instance</param>
         /// <param name="outputFile">Output file path</param>
         /// <returns></returns>
         bool Export(Group model, string outputFile);

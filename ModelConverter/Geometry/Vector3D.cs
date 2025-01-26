@@ -76,12 +76,62 @@
         public static Vector3D operator +(Vector3D first, Vector3D second) => new(first.X + second.X, first.Y + second.Y, first.Z + second.Z);
 
         /// <summary>
+        /// Cross product
+        /// </summary>
+        /// <param name="other">Other vector</param>
+        /// <returns>Cross product of two vectors</returns>
+        public Vector3D Cross(Vector3D other)
+        {
+            return new Vector3D
+            {
+                X = (this.Y * other.Z) - (this.Z * other.Y),
+                Y = (this.X * other.Z) - (this.Z * other.X),
+                Z = (this.X * other.Y) - (this.Y * other.X)
+            };
+        }
+
+        /// <summary>
+        /// Dot product
+        /// </summary>
+        /// <param name="other">Other vector</param>
+        /// <returns>Dot product of two vectors</returns>
+        public double Dot(Vector3D other)
+        {
+            double dproduct = 0;
+            dproduct += this.X * other.X;
+            dproduct += this.Y * other.Y;
+            dproduct += this.Z * other.Z;
+            return dproduct;
+        }
+
+        /// <summary>
         /// Get vector length
         /// </summary>
         /// <returns>Vector length</returns>
         public double GetLength()
         {
             return Math.Sqrt((this.X * this.X) + (this.Y * this.Y) + (this.Z * this.Z));
+        }
+
+        /// <summary>
+        /// Get normal vector
+        /// </summary>
+        /// <returns>Normal vector</returns>
+        public Vector3D GetNormal()
+        {
+            double lenght = this.GetLength();
+
+            if (Math.Abs(lenght) > double.Epsilon)
+            {
+                return new Vector3D
+                {
+                    X = this.X / lenght,
+                    Y = this.Y / lenght,
+                    Z = this.Z / lenght
+                };
+            }
+
+            return this;
         }
 
         /// <summary>

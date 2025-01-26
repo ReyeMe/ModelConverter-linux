@@ -4,14 +4,21 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<OutputPath>..\..\BuildDrop\Plugins\Tmf</OutputPath>
+		<OutputPath>..\..\BuildDrop\Plugins\Nya</OutputPath>
 		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<PublishTrimmed>true</PublishTrimmed>
 		<PublishReadyToRun>true</PublishReadyToRun>
-		<PublishSingleFile>true</PublishSingleFile>
+		<PublishSingleFile>false</PublishSingleFile>
 		<TrimUnusedDependencies>true</TrimUnusedDependencies>
+		<IsTrimmable>false</IsTrimmable>
+		<PublishTrimmed>false</PublishTrimmed>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="SixLabors.ImageSharp" Version="3.1.6" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\ModelConverter\ModelConverter.csproj">

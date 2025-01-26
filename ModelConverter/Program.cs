@@ -22,8 +22,24 @@
             ArgumentSettings settings = Parser<ArgumentSettings>.Parse(args);
 
             // Show help and exit
-            if (settings.ShowHelp || args.Length == 0)
+            if (settings.ShowHelp != null || args.Length == 0)
             {
+                if (!string.IsNullOrWhiteSpace(settings.ShowHelp))
+                {
+                    // Load plugins
+                    Dictionary<string, PluginLoader.Plugin> availablePlugins = PluginLoader.Loader.GetPlugins();
+
+                    if (availablePlugins.ContainsKey(settings.ShowHelp))
+                    {
+                        availablePlugins[settings.ShowHelp].PrintHelp();
+                        Environment.Exit(0);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Plugin '{settings.ShowHelp}' not found!");
+                    }
+                }
+
                 Parser<ArgumentSettings>.PrintHelp();
                 Environment.Exit(0);
             }
@@ -123,7 +139,7 @@
                     Console.WriteLine("Using import plugin '" + import.plugin.Name + "' for '" + import.file + "'");
 
                     // Import group
-                    Group? importedArtifact = import.plugin.ImportFile(import.file, settings);
+                    Group? importedArtifact = import.plugin.ImportFile(import.file, settings, args);
 
                     if (importedArtifact == null)
                     {
@@ -156,8 +172,7 @@
                                 {
                                     group.MaterialTextures.Add(material.Key, material.Value);
                                 }
-                                else if (material.Value.Color.Equals(group.MaterialTextures[material.Key].Color) &&
-                                    material.Value.TexturePath == group.MaterialTextures[material.Key].TexturePath)
+                                else if (material.Value.Equals(group.MaterialTextures[material.Key]))
                                 {
                                     Console.WriteLine("Warning: Different material with same name '" + material.Key + "' already exists! First occurence is used...");
                                 }
@@ -218,7 +233,7 @@
             Console.WriteLine("Using export plugin: " + exportPlugin.Name);
 
             
-            if (exportPlugin.ExportFile(group, settings.OuputFile, settings))
+            if (group != null && exportPlugin.ExportFile(group, settings.OuputFile, settings, args))
             {
                 Console.WriteLine("Export done.");
             }

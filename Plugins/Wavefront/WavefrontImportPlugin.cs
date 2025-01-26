@@ -6,7 +6,7 @@
     using System;
     using System.Globalization;
 
-    [Plugin("Wavefront", "Wavefront .obj file importer", ".obj")]
+    [Plugin("Wavefront", "Wavefront .obj file importer", ".obj", typeof(ObjArguments))]
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
     {
         /// <summary>
@@ -18,7 +18,7 @@
         /// Initializes a new instance of the <see cref="WavefrontImportPlugin"/> class
         /// </summary>
         /// <param name="settings">Application settings</param>
-        public WavefrontImportPlugin(ModelConverter.ArgumentSettings settings)
+        public WavefrontImportPlugin(ObjArguments settings)
         {
             this.scale = settings.Scale ?? 1.0;
         }
@@ -207,7 +207,7 @@
         {
             models.MaterialTextures = new Dictionary<string, Material>
             {
-                { string.Empty, new Material { Color = Color.FromRgb(byte.MaxValue, byte.MaxValue, byte.MaxValue), TexturePath = string.Empty } }
+                { string.Empty, new Material { BaseColor = Color.FromRgb(byte.MaxValue, byte.MaxValue, byte.MaxValue) } }
             };
 
             string? modelDirectory = Path.GetDirectoryName(waveFrontFile);
@@ -221,6 +221,8 @@
 
             if (File.Exists(mtlFile))
             {
+                string lastMaterial = string.Empty;
+
                 foreach (string line in File.ReadLines(mtlFile).Where(line => !string.IsNullOrEmpty(line) && line.Contains(" ")))
                 {
                     string lineCode = line.Substring(0, line.IndexOf(' ')).Trim();
@@ -229,15 +231,32 @@
                     {
                         case "newmtl":
                             models.MaterialTextures.Add(line.Replace(lineCode, string.Empty).Trim(), new Material());
+                            lastMaterial = line.Replace(lineCode, string.Empty).Trim();
                             break;
 
                         case "kd":
-                            models.MaterialTextures.Last().Value.Color = WavefrontImportPlugin.ParseColor(line);
+
+                            if (models.MaterialTextures.ContainsKey(lastMaterial))
+                            {
+                                models.MaterialTextures[lastMaterial].BaseColor = WavefrontImportPlugin.ParseColor(line);
+                            }
+
                             break;
 
                         case "map_kd":
                             string? file = WavefrontImportPlugin.GetAbsoluteTexturePath(line.Replace(lineCode, string.Empty).Trim(), modelDirectory);
-                            models.MaterialTextures.Last().Value.TexturePath = file ?? string.Empty;
+
+                            if (!string.IsNullOrWhiteSpace(file) && models.MaterialTextures.ContainsKey(lastMaterial))
+                            {
+                                Color baseColor = models.MaterialTextures.ContainsKey(lastMaterial) ? models.MaterialTextures[lastMaterial].BaseColor : Color.FromRgb(byte.MaxValue, byte.MaxValue, byte.MaxValue);
+
+                                models.MaterialTextures[lastMaterial] = new TextureReferenceMaterial
+                                {
+                                    BaseColor = baseColor,
+                                    TexturePath = file ?? string.Empty
+                                };
+                            }
+
                             break;
 
                         default:

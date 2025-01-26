@@ -6,7 +6,7 @@
     /// Name of the command line argument
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
-    internal sealed class CmdArgumentAttribute : Attribute
+    public sealed class CmdArgumentAttribute : Attribute
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="CmdArgumentAttribute"/> class

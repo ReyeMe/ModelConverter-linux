@@ -2,7 +2,7 @@
   "profiles": {
     "ModelConverter": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\Resources\\Models\\Tank\\Tank.obj\" \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\Resources\\Models\\Tank\\arr.obj\" -o \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\cd\\MODELS\\TANK.TMF\" -s 3.0"
+      "commandLineArgs": "-i \"D:\\Saturn\\joengine\\Projects\\TankGame-Saturn\\Resources\\Models\\Tank\\tank.obj\" -o \"D:\\VisualStudio\\PawCraft\\BuildDrop\\Assets\\Models\\tank2.NYA\" -t smooth"
     }
   }
 }

@@ -23,8 +23,8 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="TankModelFormatExportPlugin"/> class
         /// </summary>
-        /// <param name="settings">Application settings</param>
-        public TankModelFormatExportPlugin(ModelConverter.ArgumentSettings settings)
+        /// <param name="settings">Plugin settings</param>
+        public TankModelFormatExportPlugin()
         {
             // Do nothing
         }
@@ -48,7 +48,7 @@
                 {
                     throw new Exception("File does not contain any models");
                 }
-                else if (model.MaterialTextures.Count > byte.MaxValue)
+                else if (model.MaterialTextures.Where(material => material.Value is not TextureMaterial).Count() > byte.MaxValue)
                 {
                     throw new Exception("Maximum number of textures refereced in one file can be 256!");
                 }
@@ -57,7 +57,7 @@
                 // This will make it so that indexes pointing to the texture are aligned properly,
                 // and not point to something that does not exist
                 Dictionary<string, Material> sortedMaterials = model.MaterialTextures
-                    .OrderBy(material => string.IsNullOrEmpty(material.Value.TexturePath)).ToDictionary(material => material.Key, material => material.Value);
+                    .OrderBy(material => material.Value is TextureReferenceMaterial reference ? string.IsNullOrEmpty(reference.TexturePath) : true).ToDictionary(material => material.Key, material => material.Value);
 
                 // Generate model binary
                 TmfHeader header = new TmfHeader
@@ -66,7 +66,7 @@
                     TextureCount = (byte)model.MaterialTextures.Count,
                     ModelCount = (byte)model.Count,
                     Reserved = Enumerable.Repeat((byte)0x00, 5).ToArray(),
-                    Textures = sortedMaterials.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value)).ToArray(),
+                    Textures = sortedMaterials.Select(material => TankModelFormatExportPlugin.GetTextureEntry(material.Value, material.Key)).ToArray(),
                     Models = model.Select(item => TankModelFormatExportPlugin.GetModelEntry(item, sortedMaterials, model.Vertices, model.Uv, model.Normals)).ToArray()
                 };
 
@@ -338,26 +338,33 @@
         /// Get texture entry from material
         /// </summary>
         /// <param name="material">Face material</param>
+        /// <param name="name">Material key name</param>
         /// <returns>Texture entry</returns>
-        private static TmfTextureEntry GetTextureEntry(Material material)
+        private static TmfTextureEntry GetTextureEntry(Material material, string name)
         {
             TmfTextureEntry entry = new TmfTextureEntry();
 
-            if (!string.IsNullOrWhiteSpace(material.TexturePath))
+            if (material is TextureReferenceMaterial reference &&
+                !string.IsNullOrWhiteSpace(reference.TexturePath))
             {
-                string file = Path.GetFileName(material.TexturePath).ToUpper();
+                string file = Path.GetFileName(reference.TexturePath).ToUpper();
                 byte[] bytes = Encoding.ASCII.GetBytes(file).Take(13).ToArray();
                 entry.FileName = bytes.Concat(Enumerable.Repeat((byte)'\0', 13 - bytes.Length)).ToArray();
                 entry.Color = Enumerable.Repeat(byte.MaxValue, 3).ToArray();
             }
             else
             {
+                if (material is TextureMaterial)
+                {
+                    Console.WriteLine($"Warning: ('{name}') Embeded texture material is not supported!");
+                }
+
                 entry.FileName = Enumerable.Repeat((byte)'\0', 13).ToArray();
                 entry.Color = new byte[]
                 {
-                    material.Color.R,
-                    material.Color.G,
-                    material.Color.B
+                    material.BaseColor.R,
+                    material.BaseColor.G,
+                    material.BaseColor.B
                 };
             }
 
