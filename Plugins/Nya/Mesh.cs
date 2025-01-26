@@ -60,7 +60,7 @@
             // Read user flags
             int separator = face.Material.LastIndexOf('_');
 
-            if (separator > 0 && face.Material[separator - 1] == '_')
+            if (separator > 0 && face.Material[separator] == '_')
             {
                 HashSet<char> flags = face.Material.Substring(separator + 1).Where(letter => char.IsLetter(letter) && char.IsUpper(letter)).ToHashSet();
 
