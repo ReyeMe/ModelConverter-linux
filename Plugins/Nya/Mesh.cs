@@ -108,17 +108,31 @@
             }
 
             Polygon polygon = new Polygon();
+            List<Vector3D> points = face.Vertices.Select(point => group.Vertices[point]).ToList();
 
             // Get polygon clipping normal
-            List<Vector3D> points = face.Vertices.Select(point => group.Vertices[point]).ToList();
-            Vector3D clippingNormal = Mesh.FindNewNormal(points);
-            polygon.Normal = FxVector.FromVertex(clippingNormal);
-
-            // We have no vertex normals
-            if (face.Normals.Count == 0)
+            if (face.Normals.Count > 0)
             {
-                face.Normals.AddRange(Enumerable.Repeat(group.Normals.Count, face.Vertices.Count));
-                group.Normals.Add(clippingNormal);
+                Vector3D accumulator = new Vector3D();
+
+                foreach(Vector3D normal in face.Normals.Select(normal => group.Normals[normal]))
+                {
+                    accumulator += normal;
+                }
+
+                polygon.Normal = FxVector.FromVertex((accumulator / face.Normals.Count).GetNormal());
+            }
+            else
+            {
+                Vector3D clippingNormal = Mesh.FindNewNormal(points);
+                polygon.Normal = FxVector.FromVertex(clippingNormal);
+
+                // We have no vertex normals
+                if (face.Normals.Count == 0)
+                {
+                    face.Normals.AddRange(Enumerable.Repeat(group.Normals.Count, face.Vertices.Count));
+                    group.Normals.Add(clippingNormal);
+                }
             }
 
             if (faceFlag.HasTexture)
@@ -128,6 +142,10 @@
                 1, 0,*/
                 // TODO: UV mapping
                 faceFlag.TextureId = uvTextures.FindIndex(material => material.Name == face.Material);
+            }
+            else if (group.MaterialTextures.ContainsKey(face.Material))
+            {
+                faceFlag.BaseColor = group.MaterialTextures[face.Material].BaseColor.AsAbgr555();
             }
 
             // Find and add polygon points
