@@ -27,10 +27,18 @@
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to show all available plugins
+        /// Gets or sets a value indicating type of the model to export
         /// </summary>
         [CmdHelp("Model type can be either Smooth or Flat.\nDefault value is flat.")]
         [CmdArgument("type", "t")]
         public ModelTypes ModelType { get; set; }
+
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to generate fake UV mapping textures
+        /// </summary>
+        [CmdHelp("Model type can be either Smooth or Flat.\nDefault value is flat.")]
+        [CmdArgument("uv")]
+        public bool FakeUV { get; set; } = true;
     }
 }

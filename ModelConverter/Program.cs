@@ -55,7 +55,6 @@
 
                 foreach (PluginLoader.Plugin plugin in plugins.Values)
                 {
-                    Console.Write(plugin.Extension);
                     Console.CursorLeft = 0;
 
                     if (plugin.Supports.HasFlag(PluginLoader.Plugin.Support.Import))
@@ -73,10 +72,13 @@
 
                     Console.CursorLeft = 0;
 
+                    Console.Write("\t\t\t\t\t" + plugin.Description);
+                    Console.CursorLeft = 0;
                     Console.Write("\t\t" + plugin.Name);
                     Console.CursorLeft = 0;
-
-                    Console.WriteLine("\t\t\t\t\t" + plugin.Description);
+                    Console.Write(plugin.Extension);
+                    Console.CursorLeft = 0;
+                    Console.WriteLine();
                 }
 
                 Environment.Exit(0);

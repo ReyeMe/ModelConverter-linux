@@ -51,8 +51,8 @@
         /// <summary>
         /// Assembly context resolve event
         /// </summary>
-        /// <param name="arg1">Assembly context</param>
-        /// <param name="arg2">Assembly to resolve</param>
+        /// <param name="context">Assembly context</param>
+        /// <param name="assembly">Assembly to resolve</param>
         /// <returns>Resolved assembly</returns>
         private static Assembly? ContextAssemblyResolving(AssemblyLoadContext context, AssemblyName assembly)
         {
