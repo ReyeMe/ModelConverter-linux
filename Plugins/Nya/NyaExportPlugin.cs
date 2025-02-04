@@ -31,6 +31,9 @@
         /// <returns></returns>
         public bool Export(Group group, string outputFile)
         {
+            Console.WriteLine($"Exporting type: '{this.settigns.ModelType}'");
+            Console.WriteLine($"UV mapping enabled: '{!this.settigns.NoUV}'");
+
             List<Texture> uvTextures = new List<Texture>();
             List<Texture> textures = new List<Texture>();
             List<Mesh> meshes = new List<Mesh>();
@@ -48,20 +51,29 @@
                 }
             }
 
-            // TODO: remove when UV mapping
-            uvTextures = textures;
+            if (this.settigns.NoUV)
+            {
+                uvTextures = textures;
+            }
 
             foreach (Model model in group)
             {
                 if (settigns.ModelType == NyaArguments.ModelTypes.Flat)
                 {
-                    meshes.Add(new Mesh(group, model, textures, ref uvTextures));
+                    meshes.Add(new Mesh(group, model, textures, !this.settigns.NoUV, ref uvTextures));
                 }
                 else
                 {
-                    meshes.Add(new SmoothMesh(group, model, textures, ref uvTextures));
+                    meshes.Add(new SmoothMesh(group, model, textures, !this.settigns.NoUV, ref uvTextures));
                 }
             }
+
+            if (!this.settigns.NoUV)
+            {
+                Console.WriteLine($"UV mapping generated {uvTextures.Count} texture{(uvTextures.Count > 1 ? 's' : ' ')}");
+            }
+
+            Console.WriteLine($"Texture data size {uvTextures.Sum(texture => texture.DataLength + 8)} bytes");
 
             object meshData;
 

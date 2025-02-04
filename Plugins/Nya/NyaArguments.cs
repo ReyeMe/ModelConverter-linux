@@ -37,8 +37,8 @@
         /// <summary>
         /// Gets or sets a value indicating whether to generate fake UV mapping textures
         /// </summary>
-        [CmdHelp("Makes exporter generate new textures based on the UV map.")]
-        [CmdArgument("uv")]
-        public bool FakeUV { get; set; } = true;
+        [CmdHelp("Makes exporter NOT generate new textures based on the UV map.")]
+        [CmdArgument("no-unwrap", "w")]
+        public bool NoUV { get; set; }
     }
 }

@@ -15,9 +15,10 @@
         /// </summary>
         /// <param name="group">Model object group</param>
         /// <param name="model">Model object</param>
-        /// <param name="textures">Embed textures</param>
+        /// <param name="modelTextures">Model loaded textures</param>
+        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
         /// <param name="uvTextures">Embed UV textures</param>
-        public Mesh(Group group, Model model, List<Texture> textures, ref List<Texture> uvTextures)
+        public Mesh(Group group, Model model, List<Texture> modelTextures, bool unwrapTextures, ref List<Texture> uvTextures)
         {
             List<FaceFlags> faceFlags = new List<FaceFlags>();
             List<Polygon> facePolygons = new List<Polygon>();
@@ -25,7 +26,7 @@
 
             foreach (Face face in model.Faces)
             {
-                (FaceFlags flags, Polygon polygon) faceData = Mesh.ConvertFace(face, group, textures, ref vertices, ref uvTextures);
+                (FaceFlags flags, Polygon polygon) faceData = Mesh.ConvertFace(face, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
                 faceFlags.Add(faceData.flags);
                 facePolygons.Add(faceData.polygon);
             }
@@ -43,12 +44,15 @@
         /// </summary>
         /// <param name="face">Face data</param>
         /// <param name="group">Model object group</param>
-        /// <param name="textures">Embed textures</param>
+        /// <param name="modelTextures">Textures from model file textures</param>
+        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
         /// <param name="vertices">Model vertices</param>
+        /// <param name="uvTextures">Embed model vertices</param>
         private static (FaceFlags, Polygon) ConvertFace(
             Face face,
             Group group,
-            List<Texture> textures,
+            List<Texture> modelTextures,
+            bool unwrapTextures,
             ref List<Vector3D> vertices,
             ref List<Texture> uvTextures)
         {
@@ -61,7 +65,7 @@
             faceFlag.HasMeshEffect = face.IsMesh;
 
             // Read polygon
-            Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, textures, ref vertices, ref uvTextures);
+            Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
 
             return (faceFlag, polygon);
         }
@@ -72,13 +76,16 @@
         /// <param name="face">Face data</param>
         /// <param name="faceFlag">Face flags</param>
         /// <param name="group">Model object group</param>
-        /// <param name="textures">Embed textures</param>
+        /// <param name="modelTextures">Textures from model file textures</param>
+        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
         /// <param name="vertices">Model vertices</param>
+        /// <param name="uvTextures">Embed model vertices</param>
         private static Polygon ConvertPolygon(
             Face face,
             FaceFlags faceFlag,
             Group group,
-            List<Texture> textures,
+            List<Texture> modelTextures,
+            bool unwrapTextures,
             ref List<Vector3D> vertices,
             ref List<Texture> uvTextures)
         {
@@ -105,6 +112,74 @@
                         face.Normals.Add(face.Normals.Last());
                     }
                 }
+            }
+
+            if (faceFlag.HasTexture)
+            {
+                if (unwrapTextures)
+                {
+                    Texture? texture = modelTextures.FirstOrDefault(material => material.Name == face.Material);
+
+                    if (texture != null)
+                    {
+                        // Find corner with smalles UV coordinate
+                        int faceRotation = 0;
+                        Vector3D smallestUv = new Vector3D(double.MaxValue, double.MaxValue, 0.0);
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            Vector3D current = group.Uv[face.Uv[i]];
+
+                            if (smallestUv.X >= current.X && smallestUv.Y >= current.Y)
+                            {
+                                faceRotation = i;
+                                smallestUv = current;
+                            }
+                        }
+
+                        // Rotate face so that it start at the smalled UV coordinate
+                        List<int> rotatedUvs = new List<int>(face.Uv);
+                        List<int> rotatedNormals = new List<int>(face.Normals);
+                        List<int> rotatedVertices = new List<int>(face.Vertices);
+
+                        for (int i = 0; i < 4; i++)
+                        {
+                            rotatedUvs[(i + faceRotation) % 4] = face.Uv[i];
+                            rotatedNormals[(i + faceRotation) % 4] = face.Normals[i];
+                            rotatedVertices[(i + faceRotation) % 4] = face.Vertices[i];
+                        }
+
+                        face.Uv = rotatedUvs;
+                        face.Normals = rotatedNormals;
+                        face.Vertices = rotatedVertices;
+
+                        // Generate texture
+                        faceFlag.TextureId = Mesh.GetUvMappedTexture(texture, face.Uv, group.Uv, ref uvTextures);
+                    }
+                    else
+                    {
+                        faceFlag.HasTexture = false;
+                        faceFlag.BaseColor = group.MaterialTextures[face.Material].BaseColor.AsAbgr555();
+                    }
+                }
+                else
+                {
+                    int found = modelTextures.FindIndex(material => material.Name == face.Material);
+
+                    if (found == -1)
+                    {
+                        faceFlag.HasTexture = false;
+                        faceFlag.BaseColor = group.MaterialTextures[face.Material].BaseColor.AsAbgr555();
+                    }
+                    else
+                    {
+                        faceFlag.TextureId = found;
+                    }
+                }
+            }
+            else if (group.MaterialTextures.ContainsKey(face.Material))
+            {
+                faceFlag.BaseColor = group.MaterialTextures[face.Material].BaseColor.AsAbgr555();
             }
 
             Polygon polygon = new Polygon();
@@ -135,19 +210,6 @@
                 }
             }
 
-            if (faceFlag.HasTexture)
-            {
-                /* 0, 1,
-                1, 1,
-                1, 0,*/
-                // TODO: UV mapping
-                faceFlag.TextureId = uvTextures.FindIndex(material => material.Name == face.Material);
-            }
-            else if (group.MaterialTextures.ContainsKey(face.Material))
-            {
-                faceFlag.BaseColor = group.MaterialTextures[face.Material].BaseColor.AsAbgr555();
-            }
-
             // Find and add polygon points
             for (int point = 0; point < points.Count; point++)
             {
@@ -166,6 +228,32 @@
             }
 
             return polygon;
+        }
+
+        /// <summary>
+        /// Get UV mapped texture from base texture
+        /// </summary>
+        /// <param name="baseTexture">Base texture</param>
+        /// <param name="uv">UV coord indicies for quad</param>
+        /// <param name="uvCoords">All UV coords</param>
+        /// <param name="uvTextures">UV texture atlas</param>
+        /// <returns>Number of already existing or new texture</returns>
+        private static int GetUvMappedTexture(Texture baseTexture, List<int> uv, List<Vector3D> uvCoords, ref List<Texture> uvTextures)
+        {
+            // Check if texture mapped to this region exists already
+            int existing = uvTextures.FindIndex(texture => texture.UV.Select((id, i) => id == uv[i]).All(val => val));
+
+            // If not, generate new texture
+            if (existing == -1)
+            {
+                List<Vector3D> coords = uv.Select(coord => uvCoords[coord]).ToList();
+                Texture unwrap = Texture.GetUnwrap(baseTexture, coords);
+                unwrap.UV = uv.ToArray();
+                existing = uvTextures.Count;
+                uvTextures.Add(unwrap);
+            }
+
+            return existing;
         }
 
         /// <summary>

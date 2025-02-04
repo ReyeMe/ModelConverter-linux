@@ -28,18 +28,18 @@
         public string Material { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets normal vector indices
+        /// Gets or sets normal vector indices
         /// </summary>
-        public List<int> Normals { get; } = new List<int>();
+        public List<int> Normals { get; set; } = new List<int>();
 
         /// <summary>
-        /// Gets UV indices
+        /// Gets or sets UV indices
         /// </summary>
-        public List<int> Uv { get; } = new List<int>();
+        public List<int> Uv { get; set; } = new List<int>();
 
         /// <summary>
-        /// Gets vertices indices
+        /// Gets or sets vertices indices
         /// </summary>
-        public List<int> Vertices { get; } = new List<int>();
+        public List<int> Vertices { get; set; } = new List<int>();
     }
 }

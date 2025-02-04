@@ -14,8 +14,9 @@
         /// <param name="group">Model object group</param>
         /// <param name="model">Model object</param>
         /// <param name="textures">Embed textures</param>
+        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
         /// <param name="uvTextures">Embed UV textures</param>
-        public SmoothMesh(Group group, Model model, List<Texture> textures, ref List<Texture> uvTextures) : base(group, model, textures, ref uvTextures)
+        public SmoothMesh(Group group, Model model, List<Texture> textures, bool unwrapTextures, ref List<Texture> uvTextures) : base(group, model, textures, unwrapTextures, ref uvTextures)
         {
             this.Normals = new FxVector[this.PointCount];
 
