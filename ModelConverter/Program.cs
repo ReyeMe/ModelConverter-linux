@@ -174,7 +174,7 @@
                                 {
                                     group.MaterialTextures.Add(material.Key, material.Value);
                                 }
-                                else if (material.Value.Equals(group.MaterialTextures[material.Key]))
+                                else if (!material.Value.Equals(group.MaterialTextures[material.Key]))
                                 {
                                     Console.WriteLine("Warning: Different material with same name '" + material.Key + "' already exists! First occurence is used...");
                                 }

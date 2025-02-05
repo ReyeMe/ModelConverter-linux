@@ -6,6 +6,7 @@
     using System;
     using System.Globalization;
     using System.Security.AccessControl;
+    using static System.Net.Mime.MediaTypeNames;
 
     [Plugin("Wavefront", "Wavefront .obj file importer", ".obj", typeof(ObjArguments))]
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
@@ -222,7 +223,7 @@
 
             if (string.IsNullOrEmpty(modelDirectory))
             {
-                return;
+                modelDirectory = System.IO.Directory.GetCurrentDirectory();
             }
 
             string mtlFile = Path.Combine(modelDirectory, Path.GetFileNameWithoutExtension(waveFrontFile) + ".mtl");
