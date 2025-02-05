@@ -138,6 +138,9 @@
                 face.IsMesh = flags.Contains('M');
                 face.IsDoubleSided = flags.Contains('D');
                 face.IsHalfTransparent = flags.Contains('H');
+                face.IsFlat = flags.Contains('F');
+                face.IsHalfBright = flags.Contains('B');
+                face.SortMode = flags.Contains('L') ? 3 : (flags.Contains('-') ? 2 : (flags.Contains('+') ? 1 : 0));
             }
 
             foreach (string vertex in line.Substring(1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))

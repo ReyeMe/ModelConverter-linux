@@ -36,18 +36,18 @@
         }
 
         /// <summary>
-        /// Gets or sets a flag indicating whether face has half transparency effect
+        /// Gets or sets a flag indicating whether face has a texture
         /// </summary>
-        public bool IsHalfTransparent
+        public bool HasTexture
         {
             get
             {
-                return (this.Flags & 0x10) != 0;
+                return (this.Flags & 0x80) != 0;
             }
 
             set
             {
-                this.Flags = (byte)((this.Flags & 0xef) | (value ? 0x10 : 0));
+                this.Flags =  (byte)((this.Flags & 0x7f) | (value ? 0x80 : 0));
             }
         }
 
@@ -68,18 +68,50 @@
         }
 
         /// <summary>
-        /// Gets or sets a flag indicating whether face has a texture
+        /// Gets or sets a flag indicating whether face is always flat shaded
         /// </summary>
-        public bool HasTexture
+        public bool IsFlat
         {
             get
             {
-                return (this.Flags & 0x80) != 0;
+                return (this.Flags & 0x08) != 0;
             }
 
             set
             {
-                this.Flags =  (byte)((this.Flags & 0x7f) | (value ? 0x80 : 0));
+                this.Flags =  (byte)((this.Flags & 0xf7) | (value ? 0x08 : 0));
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a flag indicating whether face is rendered at half brightness
+        /// </summary>
+        public bool IsHalfBright
+        {
+            get
+            {
+                return (this.Flags & 0x04) != 0;
+            }
+
+            set
+            {
+                this.Flags = (byte)((this.Flags & 0xfb) | (value ? 0x04 : 0));
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a flag indicating whether face has half transparency effect
+        /// </summary>
+        public bool IsHalfTransparent
+        {
+            get
+            {
+                return (this.Flags & 0x10) != 0;
+            }
+
+            set
+            {
+                this.Flags = (byte)((this.Flags & 0xef) | (value ? 0x10 : 0));
             }
         }
 
@@ -88,6 +120,22 @@
         /// </summary>
         [FieldOrder(1)]
         public byte Reserved { get; set; }
+
+        /// <summary>
+        /// Gets or sets face sort mode
+        /// </summary>
+        public int SortMode
+        {
+            get
+            {
+                return (this.Flags & 0x03);
+            }
+
+            set
+            {
+                this.Flags =  (byte)((this.Flags & 0xfc) | ((value & 0x03) << 1));
+            }
+        }
 
         /// <summary>
         /// Gets or sets texture assigned to this face

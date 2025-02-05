@@ -63,6 +63,9 @@
             faceFlag.IsDoubleSided = face.IsDoubleSided;
             faceFlag.IsHalfTransparent = face.IsHalfTransparent;
             faceFlag.HasMeshEffect = face.IsMesh;
+            faceFlag.IsFlat = face.IsFlat;
+            faceFlag.SortMode = face.SortMode;
+            faceFlag.IsHalfBright = face.IsHalfBright;
 
             // Read polygon
             Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
@@ -241,7 +244,7 @@
         private static int GetUvMappedTexture(Texture baseTexture, List<int> uv, List<Vector3D> uvCoords, ref List<Texture> uvTextures)
         {
             // Check if texture mapped to this region exists already
-            int existing = uvTextures.FindIndex(texture => texture.UV.Select((id, i) => id == uv[i]).All(val => val));
+            int existing = uvTextures.FindIndex(texture => texture.UV.Select((id, i) => (uvCoords[id] - uvCoords[uv[i]]).GetLength() <= double.Epsilon).All(val => val));
 
             // If not, generate new texture
             if (existing == -1)

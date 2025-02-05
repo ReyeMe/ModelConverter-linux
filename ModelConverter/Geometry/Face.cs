@@ -23,6 +23,21 @@
         public bool IsHalfTransparent { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether face is rendered at half brightness
+        /// </summary>
+        public bool IsHalfBright { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this face must be flat shaded
+        /// </summary>
+        public bool IsFlat { get; set; }
+
+        /// <summary>
+        /// Gets or sets sort mode
+        /// </summary>
+        public int SortMode { get; set; }
+
+        /// <summary>
         /// Gets or sets material name
         /// </summary>
         public string Material { get; set; } = string.Empty;

@@ -146,8 +146,8 @@
                     Vector3D bottomLocation = uv[3] + (uvBottomDirection * portionX);
                     Vector3D uvLocation = bottomLocation + ((topLocation - bottomLocation) * portionY);
 
-                    int uvX = (int)(uvLocation.X * baseTexture.Width);
-                    int uvY = (baseTexture.Height - 1) - (int)(uvLocation.Y * baseTexture.Height);
+                    int uvX = (int)(uvLocation.X * (baseTexture.Width - 1));
+                    int uvY = (baseTexture.Height - 1) - (int)(uvLocation.Y * (baseTexture.Height - 1));
                     data.Add(baseTexture.Data[(uvY * baseTexture.Width) + uvX]);
                 }
             }
