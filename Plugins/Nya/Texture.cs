@@ -130,10 +130,12 @@
             // New empty texture
             Texture unwrap = new Texture(baseTexture.Name + "+" + Guid.NewGuid().ToString(), width, height, new ushort[width * height]);
 
+            // UV map polygon axies
             Vector3D uvTopDirection = uv[1] - uv[0];
             Vector3D uvBottomDirection = uv[2] - uv[3];
             List<ushort> data = new List<ushort>();
 
+            // Render to rectangle
             for (int y = height - 1; y >= 0; y--)
             {
                 double portionY = ((y + 1) / (double)height);
@@ -142,12 +144,35 @@
                 {
                     double portionX = ((x + 1) / (double)width);
 
+                    // Calculate location on quad
                     Vector3D topLocation = uv[0] + (uvTopDirection * portionX);
                     Vector3D bottomLocation = uv[3] + (uvBottomDirection * portionX);
                     Vector3D uvLocation = bottomLocation + ((topLocation - bottomLocation) * portionY);
 
+                    // Calculate location in the UV mapped texture
                     int uvX = (int)(uvLocation.X * (baseTexture.Width - 1));
                     int uvY = (baseTexture.Height - 1) - (int)(uvLocation.Y * (baseTexture.Height - 1));
+
+                    // Handle repeating textures
+                    if (uvX >= baseTexture.Width)
+                    {
+                        uvX %= baseTexture.Width;
+                    }
+                    else if (uvX < 0)
+                    {
+                        uvX = baseTexture.Width - (Math.Abs(uvX + 1) % baseTexture.Width) - 1;
+                    }
+
+                    if (uvY >= baseTexture.Height)
+                    {
+                        uvY %= baseTexture.Height;
+                    }
+                    else if (uvY < 0)
+                    {
+                        uvY = baseTexture.Height - (Math.Abs(uvY + 1) % baseTexture.Height) - 1;
+                    }
+
+                    // Write pixel to rectangle texture
                     data.Add(baseTexture.Data[(uvY * baseTexture.Width) + uvX]);
                 }
             }

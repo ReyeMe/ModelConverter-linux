@@ -29,6 +29,7 @@
         /// </summary>
         [CmdHelp("Path to the input file. (eg.: -i \"work/models/test.obj\") or multiple files (eg.: -i \"work/models/test1.obj\" \"work/models/test2.obj\")")]
         [CmdArgument("i")]
+        [CmdWildPathConverter]
         public string[]? InputFile { get; set; }
 
         /// <summary>
@@ -36,6 +37,7 @@
         /// </summary>
         [CmdHelp("Path to the ouput file. (eg.: -o \"work/result.tmf\")")]
         [CmdArgument("o")]
+        [CmdAbsolutePathConverter]
         public string? OuputFile { get; set; }
 
         /// <summary>

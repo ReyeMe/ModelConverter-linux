@@ -13,6 +13,63 @@
     internal sealed class Program
     {
         /// <summary>
+        /// Application exit codes
+        /// </summary>
+        internal enum ExitCodes
+        {
+            /// <summary>
+            /// Everything went according to plan
+            /// </summary>
+            Ok = 0,
+
+            /// <summary>
+            /// Missing or malformed input file paths
+            /// </summary>
+            NoOrBadInput,
+
+            /// <summary>
+            /// Missing or malformed output file path
+            /// </summary>
+            NoOrBadOutput,
+
+            /// <summary>
+            /// No plugin supporting this format exists
+            /// </summary>
+            NotSupportedFormat,
+
+            /// <summary>
+            /// Import has ended in a failure
+            /// </summary>
+            ImportFailed,
+
+            /// <summary>
+            /// Export has ended in a failure
+            /// </summary>
+            ExportFailed,
+
+            /// <summary>
+            /// Specified plugin does not exit
+            /// </summary>
+            PluginNotFound,
+        }
+
+        /// <summary>
+        /// Exit program
+        /// </summary>
+        /// <param name="exitCode">Program exit code</param>
+        [DoesNotReturn]
+        public static void Exit(ExitCodes exitCode)
+        {
+            if (exitCode != ExitCodes.Ok)
+            {
+                string exitCodeName = (new string(exitCode.ToString().SelectMany(x => char.IsUpper(x) ? new[] { ' ', x } : new[] { x }).ToArray())).Trim();
+                Console.WriteLine($"An error has occured. Exited with: {exitCodeName}");
+            }
+
+            Environment.Exit((int)exitCode);
+        }
+
+        /// <summary>
         /// Main program entry
         /// </summary>
         /// <param name="args">Application arguments</param>
@@ -32,16 +89,17 @@
                     if (availablePlugins.ContainsKey(settings.ShowHelp))
                     {
                         availablePlugins[settings.ShowHelp].PrintHelp();
-                        Environment.Exit(0);
+                        Program.Exit(ExitCodes.Ok);
                     }
                     else
                     {
                         Console.WriteLine($"Plugin '{settings.ShowHelp}' not found!");
+                        Program.Exit(ExitCodes.PluginNotFound);
                     }
                 }
 
                 Parser<ArgumentSettings>.PrintHelp();
-                Environment.Exit(0);
+                Program.Exit(ExitCodes.Ok);
             }
 
             // Load plugins
@@ -81,23 +139,23 @@
                     Console.WriteLine();
                 }
 
-                Environment.Exit(0);
+                Program.Exit(ExitCodes.Ok);
             }
 
             if (settings.InputFile?.All(file => string.IsNullOrEmpty(file) || !File.Exists(file)) ?? false)
             {
                 Console.WriteLine("One or more of the input files are missing! Use --help or -h for help.");
-                Environment.Exit(0);
+                Program.Exit(ExitCodes.NoOrBadInput);
             }
 
             if (string.IsNullOrEmpty(settings.OuputFile) || !Directory.Exists(Path.GetDirectoryName(settings.OuputFile)))
             {
                 Console.WriteLine("Output directory is missing! Use --help or -h for help.");
-                Environment.Exit(0);
+                Program.Exit(ExitCodes.NoOrBadOutput);
             }
 
             // Start converting
-            Console.WriteLine(string.Format("Input files:\n{0}", string.Join(", ", settings.InputFile ?? new[] { string.Empty })));
+            Console.WriteLine(string.Format("Input files:\n{0}", string.Join(", ", settings.InputFile?.Select(file => Path.GetFileName(file)) ?? new[] { string.Empty })));
             Console.WriteLine(string.Format("Output file: {0}", settings.OuputFile));
 
             List<(PluginLoader.Plugin, string)>? importPlugins = settings.InputFile?.Select(file =>
@@ -113,7 +171,7 @@
                     if (importPlugin == null)
                     {
                         Console.WriteLine("No available plugin supports '." + Path.GetExtension(file) + "' file extension! Use -plugins to see available plugins.");
-                        Environment.Exit(0);
+                        Program.Exit(ExitCodes.NotSupportedFormat);
                     }
                 }
                 else
@@ -125,7 +183,7 @@
                     if (importPlugin == null)
                     {
                         Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
-                        Environment.Exit(0);
+                        Program.Exit(ExitCodes.PluginNotFound);
                     }
                 }
 
@@ -138,7 +196,7 @@
             {
                 foreach ((PluginLoader.Plugin plugin, string file) import in importPlugins)
                 {
-                    Console.WriteLine("Using import plugin '" + import.plugin.Name + "' for '" + import.file + "'");
+                    Console.WriteLine("Using import plugin '" + import.plugin.Name + "' for '" + Path.GetFileName(import.file) + "'");
 
                     // Import group
                     Group? importedArtifact = import.plugin.ImportFile(import.file, settings, args);
@@ -146,7 +204,7 @@
                     if (importedArtifact == null)
                     {
                         Console.WriteLine("Import failed!");
-                        Environment.Exit(0);
+                        Program.Exit(ExitCodes.ImportFailed);
                     }
                     else
                     {
@@ -216,7 +274,7 @@
                 if (exportPlugin == null)
                 {
                     Console.WriteLine("No available plugin supports this file extension! Use -plugins to see available plugins.");
-                    Environment.Exit(0);
+                    Program.Exit(ExitCodes.NotSupportedFormat);
                 }
             }
             else
@@ -228,20 +286,21 @@
                 if (exportPlugin == null)
                 {
                     Console.WriteLine("Selected plugin not found! Use -plugins to see available plugins.");
-                    Environment.Exit(0);
+                    Program.Exit(ExitCodes.PluginNotFound);
                 }
             }
 
             Console.WriteLine("Using export plugin: " + exportPlugin.Name);
 
-            
             if (group != null && exportPlugin.ExportFile(group, settings.OuputFile, settings, args))
             {
                 Console.WriteLine("Export done.");
+                Program.Exit(ExitCodes.Ok);
             }
             else
             {
                 Console.WriteLine("Export failed.");
+                Program.Exit(ExitCodes.ExportFailed);
             }
         }
     }
