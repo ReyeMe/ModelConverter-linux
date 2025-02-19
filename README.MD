@@ -39,7 +39,6 @@ Plugin    | Type   | Ext  | Description
 ----------|--------|------|--------------
 NYA       | Export | .NYA | Export for sega Saturn game [Utenyaa](https://reye.me/?show=Project&Id=utenyaa) and [SRL](https://srl.reye.me/) samples
 TMF       | Export | .TMF | Export for sega Saturn game [TankGame](https://reye.me/?show=Project&Id=TankGame)
-Cobra     | Export | .CBR | Export for sega Saturn game by Cobra!
 Wavefront | Import | .obj | Wavefront importer
 
 #### Wavefront import plugin
