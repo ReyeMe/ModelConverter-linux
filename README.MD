@@ -1,6 +1,34 @@
 # Model converter
 Simple cross-platform model converter written in C# .NET with plugin support.
 
+## Base arguments
+### Base arguments
+Argument          | Description
+------------------|------------------------------------------------------
+exp&#160;*[name]* | Force export plugin regardless of file extension
+imp&#160;*[name]* | Force import plugin regardless of file extension
+i&#160;*[paths]*  | Path to the input file. (eg.: -i "work/models/test.obj") or multiple files (eg.: -i "work/models/test1.obj" "work/models/test2.obj")
+o&#160;*[path]*   | Path to the output file. (eg.: -o "work/result.tmf")
+help, h           | Shows this helps screen. To show specific plugin help add plugin name after command.
+plugins           | Show all available plugins.
+
+__Note:__ ``-i`` argument can take multiple paths, this allows the export plugins to create either vertex animated models or store multiple models in a single file.  
+Example: ``-i "MyFolder/model_01.obj" "MyFolder/model_02.obj"``
+
+Paths specified for the ``-i`` argument can also use wildcards.  
+Example: ``-i "MyFolder/model_*.obj"``
+
+### Argument usage example
+
+#### Windows:
+```batch
+ModelConverter -i "./my models/model.obj" -o "./converted/MODEL.NYA"
+```
+#### Linux:
+```bash
+dotnet ./ModelConverter.dll -i "./my models/model.obj" -o "./converted/MODEL.NYA"
+```
+
 ## Plugins
 Model converter supports both import and export plugins. Plugins can either be picked automatically or manually using cmd arguments.
 
@@ -51,31 +79,3 @@ t, type      | Specify object type<br/>``-t Flat`` = Flat shaded<br/>``-t Smooth
 ### Custom plugins
 Custom plugins can be also written by referencing the ModelConverter.dll and implementing the interfaces within. Custom plugin dll with its dependencies can than be put inside ``/plugins/[plugin name]/`` folder.
 Each custom plugin can also implement its own command line arguments.
-
-## Base arguments
-### Base arguments
-Argument          | Description
-------------------|------------------------------------------------------
-exp&#160;*[name]* | Force export plugin regardless of file extension
-imp&#160;*[name]* | Force import plugin regardless of file extension
-i&#160;*[paths]*  | Path to the input file. (eg.: -i "work/models/test.obj") or multiple files (eg.: -i "work/models/test1.obj" "work/models/test2.obj")
-o&#160;*[path]*   | Path to the output file. (eg.: -o "work/result.tmf")
-help, h           | Shows this helps screen. To show specific plugin help add plugin name after command.
-plugins           | Show all available plugins.
-
-__Note:__ ``-i`` argument can take multiple paths, this allows the export plugins to create either vertex animated models or store multiple models in a single file.  
-Example: ``-i "MyFolder/model_01.obj" "MyFolder/model_02.obj"``
-
-Paths specified for the ``-i`` argument can also use wildcards.  
-Example: ``-i "MyFolder/model_*.obj"``
-
-### Argument usage example
-
-#### Windows:
-```batch
-ModelConverter -i "./my models/model.obj" -o "./converted/MODEL.NYA"
-```
-#### Linux:
-```bash
-dotnet ./ModelConverter.dll -i "./my models/model.obj" -o "./converted/MODEL.NYA"
-```
