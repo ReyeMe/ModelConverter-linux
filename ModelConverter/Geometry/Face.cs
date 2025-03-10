@@ -13,14 +13,9 @@
         public bool IsDoubleSided { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether face is rendered as mesh
+        /// Gets or sets a value indicating whether this face must be flat shaded
         /// </summary>
-        public bool IsMesh { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether face is rendered as half-transparent
-        /// </summary>
-        public bool IsHalfTransparent { get; set; }
+        public bool IsFlat { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether face is rendered at half brightness
@@ -28,14 +23,19 @@
         public bool IsHalfBright { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this face must be flat shaded
+        /// Gets or sets a value indicating whether face is rendered as half-transparent
         /// </summary>
-        public bool IsFlat { get; set; }
+        public bool IsHalfTransparent { get; set; }
 
         /// <summary>
-        /// Gets or sets sort mode
+        /// Gets or sets a value indicating whether face is rendered as mesh
         /// </summary>
-        public int SortMode { get; set; }
+        public bool IsMesh { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether face is only a wireframe
+        /// </summary>
+        public bool IsWireframe { get; set; }
 
         /// <summary>
         /// Gets or sets material name
@@ -46,6 +46,11 @@
         /// Gets or sets normal vector indices
         /// </summary>
         public List<int> Normals { get; set; } = new List<int>();
+
+        /// <summary>
+        /// Gets or sets sort mode
+        /// </summary>
+        public int SortMode { get; set; }
 
         /// <summary>
         /// Gets or sets UV indices

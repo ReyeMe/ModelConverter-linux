@@ -142,6 +142,7 @@
                 face.IsFlat = flags.Contains('F');
                 face.IsHalfBright = flags.Contains('B');
                 face.SortMode = flags.Contains('L') ? 3 : (flags.Contains('-') ? 2 : (flags.Contains('+') ? 1 : 0));
+                face.IsWireframe = flags.Contains('W');
             }
 
             foreach (string vertex in line.Substring(1).Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
@@ -157,7 +158,7 @@
                         face.Vertices.Add(temp - 1);
                     }
 
-                    if (components.Length >= 2)
+                    if (components.Length >= 2 && !face.IsWireframe)
                     {
                         if (int.TryParse(components[1], out temp))
                         {

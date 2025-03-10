@@ -54,20 +54,31 @@ D     | Face is double sided
 H     | Half-transparent (50% VDP1 transparency)
 F     | Force face to be flat shaded
 B     | Half-bright (50% color brightness)
+W     | Mesh face is rendered as outline wires (rendered as closed polyline)
 L,-,+ | ``L`` = Same sort as last rendered quad<br/>``-`` = Sort by closest point<br/>``+`` = Sort by furthest point<br/>If not specified, sorting by center point is used
+
+__Note:__ *Support of these flags highly depends on the export plugins.*
 
 ##### Plugin arguments
 Argument | Description
 ---------|------------------------------------------------------
 s, scale | Scale the imported object by some multiplier<br/>``-s 1.5`` = Scale 1.5x
 
+#### TMF export plugin
+##### Description
+Export for sega Saturn game [TankGame](https://reye.me/?show=Project&Id=TankGame). Format has support for multiple objects within a single file. Textures are not embedded inside a file, but referenced by a file name specified in the ``map_kd``.
+
+__Note:__ *See the [plugin project folder](https://github.com/ReyeMe/ModelConverter-linux/tree/main/Plugins/Tmf/saturn/jo-engine) in github repository for loader code for [jo-engine](https://www.jo-engine.org/).*  
+__Note:__ *This plugin does not support UV mapping, and supports only **D** and **M** flags.*
+
 #### Nya export plugin
 ##### Description
 Export for sega Saturn game [Utenyaa](https://reye.me/?show=Project&Id=utenyaa) and [SRL](https://srl.reye.me/) samples.  
 This format supports UV mapping and smooth shading, also allows for multiple objects to be inside a single file making vertex animations possible as well.
 
-__Note:__ When exporting smooth type, vertex normal table is exported at the end of object mesh data.  
-__Note:__ UV mapping generates a new sprite texture for each unique UV region.  
+__Note:__ *When exporting smooth type, vertex normal table is exported at the end of object mesh data.*  
+__Note:__ *UV mapping generates a new sprite texture for each unique UV region.*  
+__Note:__ *This plugin supports all of the face flags.*
 
 ##### Plugin arguments
 Argument     | Description

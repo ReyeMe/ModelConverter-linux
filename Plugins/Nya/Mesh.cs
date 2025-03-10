@@ -66,6 +66,7 @@
             faceFlag.IsFlat = face.IsFlat;
             faceFlag.SortMode = face.SortMode;
             faceFlag.IsHalfBright = face.IsHalfBright;
+            faceFlag.IsWireframe = face.IsWireframe;
 
             // Read polygon
             Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
@@ -117,7 +118,7 @@
                 }
             }
 
-            if (faceFlag.HasTexture)
+            if (faceFlag.HasTexture && !faceFlag.IsWireframe)
             {
                 if (unwrapTextures)
                 {

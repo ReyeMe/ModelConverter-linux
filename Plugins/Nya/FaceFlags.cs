@@ -20,6 +20,12 @@
         public byte Flags { get; set; } = 0x00;
 
         /// <summary>
+        /// Gets or sets second set of flags
+        /// </summary>
+        [FieldOrder(1)]
+        public byte Flags2 { get; set; } = 0x00;
+
+        /// <summary>
         /// Gets or sets a flag indicating whether face has mesh effect
         /// </summary>
         public bool HasMeshEffect
@@ -116,10 +122,20 @@
         }
 
         /// <summary>
-        /// Reserverd for future use
+        /// Gets or sets a flag indicating whether face is rendered as wires
         /// </summary>
-        [FieldOrder(1)]
-        public byte Reserved { get; set; }
+        public bool IsWireframe
+        {
+            get
+            {
+                return (this.Flags2 & 0x80) != 0;
+            }
+
+            set
+            {
+                this.Flags2 =  (byte)((this.Flags2 & 0x7f) | (value ? 0x80 : 0));
+            }
+        }
 
         /// <summary>
         /// Gets or sets face sort mode
