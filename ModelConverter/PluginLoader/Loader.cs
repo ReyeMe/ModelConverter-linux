@@ -35,7 +35,7 @@
                     .GetExportedTypes()
                     .Where(type => typeof(IExportPlugin).IsAssignableFrom(type) || typeof(IImportPlugin).IsAssignableFrom(type))
                     .Where(type => type.GetCustomAttribute<PluginAttribute>() != null)
-                    .Select(type => new Plugin(type))
+                    .Select(type => new Plugin(type, context))
                     .ToList();
 
                 context.Resolving += Loader.ContextAssemblyResolving;
@@ -64,7 +64,11 @@
 
                 if (File.Exists(dll))
                 {
-                    return context.LoadFromAssemblyPath(dll);
+                    try
+                    {
+                        return context.LoadFromAssemblyPath(dll);
+                    }
+                    catch { }
                 }
             }
 

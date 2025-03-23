@@ -41,7 +41,7 @@
             foreach (KeyValuePair<string, Material> material in group.MaterialTextures
                 .OrderByDescending(material => material.Value is TextureReferenceMaterial || material.Value is TextureMaterial))
             {
-                if (material.Value is TextureReferenceMaterial refMat)
+                if (material.Value is TextureReferenceMaterial refMat && File.Exists(refMat.TexturePath))
                 {
                     textures.Add(new Texture(material.Key, Helpers.GetBitmap(refMat.TexturePath)));
                 }

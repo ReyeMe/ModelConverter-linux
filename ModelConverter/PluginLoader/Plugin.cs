@@ -3,6 +3,7 @@
     using System;
     using System.Diagnostics.CodeAnalysis;
     using System.Reflection;
+    using System.Runtime.Loader;
     using ModelConverter.Geometry;
     using ModelConverter.ParameterParser;
 
@@ -21,8 +22,9 @@
         /// Initializes a new isntance of the <see cref="Plugin"/> class
         /// </summary>
         /// <param name="pluginBaseClassType"></param>
+        /// <param name="context">Assembly context</param>
         /// <exception cref="InvalidOperationException"></exception>
-        internal Plugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type pluginBaseClassType)
+        internal Plugin([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type pluginBaseClassType, AssemblyLoadContext context)
         {
             PluginAttribute? attribute = pluginBaseClassType.GetCustomAttribute<PluginAttribute>();
 
@@ -34,6 +36,7 @@
 
                 this.type = pluginBaseClassType;
                 this.CustomArgumentsViewType = attribute.CustomArguments;
+                this.Context = context;
 
                 if (typeof(IExportPlugin).IsAssignableFrom(this.type))
                 {
@@ -76,6 +79,11 @@
             /// </summary>
             Both = Import | Export,
         }
+
+        /// <summary>
+        /// Gets assembly context
+        /// </summary>
+        public AssemblyLoadContext Context { get; }
 
         /// <summary>
         /// Custom type of the class holding cutom plugin arguments
