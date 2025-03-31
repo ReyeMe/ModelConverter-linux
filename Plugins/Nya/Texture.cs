@@ -3,7 +3,6 @@
     using ModelConverter.Geometry;
     using ModelConverter.Graphics;
     using Nya.Serializer;
-    using static System.Net.Mime.MediaTypeNames;
     using SLIS = SixLabors.ImageSharp;
 
     /// <summary>
@@ -179,6 +178,22 @@
 
             unwrap.Data = data.ToArray();
             return unwrap;
+        }
+
+        /// <summary>
+        /// Get base name
+        /// </summary>
+        /// <returns>Base name</returns>
+        public string GetBaseName()
+        {
+            var id = this.Name.LastIndexOf('+');
+
+            if (id > 0)
+            {
+                return this.Name[..id];
+            }
+
+            return this.Name;
         }
     }
 }

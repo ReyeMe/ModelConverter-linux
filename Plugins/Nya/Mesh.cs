@@ -194,7 +194,7 @@
             {
                 Vector3D accumulator = new Vector3D();
 
-                foreach(Vector3D normal in face.Normals.Select(normal => group.Normals[normal]))
+                foreach (Vector3D normal in face.Normals.Select(normal => group.Normals[normal]))
                 {
                     accumulator += normal;
                 }
@@ -245,7 +245,8 @@
         private static int GetUvMappedTexture(Texture baseTexture, List<int> uv, List<Vector3D> uvCoords, ref List<Texture> uvTextures)
         {
             // Check if texture mapped to this region exists already
-            int existing = uvTextures.FindIndex(texture => texture.UV.Select((id, i) => (uvCoords[id] - uvCoords[uv[i]]).GetLength() <= double.Epsilon).All(val => val));
+            int existing = uvTextures
+                .FindIndex(texture => texture.GetBaseName() == baseTexture.Name && texture.UV.Select((id, i) => (uvCoords[id] - uvCoords[uv[i]]).GetLength() <= double.Epsilon).All(val => val));
 
             // If not, generate new texture
             if (existing == -1)
