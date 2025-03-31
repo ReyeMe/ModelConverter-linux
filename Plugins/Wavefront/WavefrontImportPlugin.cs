@@ -5,8 +5,6 @@
     using ModelConverter.PluginLoader;
     using System;
     using System.Globalization;
-    using System.Security.AccessControl;
-    using static System.Net.Mime.MediaTypeNames;
 
     [Plugin("Wavefront", "Wavefront .obj file importer", ".obj", typeof(ObjArguments))]
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
@@ -14,7 +12,12 @@
         /// <summary>
         /// Model scale
         /// </summary>
-        private double scale = 1.0;
+        private readonly double scale = 1.0;
+
+        /// <summary>
+        /// Model default sort mode
+        /// </summary>
+        private readonly ObjArguments.SortModes sortModes;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="WavefrontImportPlugin"/> class
@@ -23,6 +26,7 @@
         public WavefrontImportPlugin(ObjArguments settings)
         {
             this.scale = settings.Scale ?? 1.0;
+            this.sortModes = settings.SortMode ?? ObjArguments.SortModes.Mid;
         }
 
         /// <summary>
@@ -68,7 +72,7 @@
                             models.Add(new Model());
                         }
 
-                        models.Last().Faces.Add(WavefrontImportPlugin.ParseFace(line, lastMaterial));
+                        models.Last().Faces.Add(WavefrontImportPlugin.ParseFace(line, lastMaterial, this.sortModes));
                         break;
 
                     default:
@@ -124,8 +128,9 @@
         /// </summary>
         /// <param name="line">Face line</param>
         /// <param name="material">Current material</param>
+        /// <param name="defaultSortMode">Default sort mode</param>
         /// <returns>Parsed face</returns>
-        private static Face ParseFace(string line, string material)
+        private static Face ParseFace(string line, string material, ObjArguments.SortModes defaultSortMode)
         {
             Face face = new Face { Material = material };
 
@@ -141,7 +146,7 @@
                 face.IsHalfTransparent = flags.Contains('H');
                 face.IsFlat = flags.Contains('F');
                 face.IsHalfBright = flags.Contains('B');
-                face.SortMode = flags.Contains('L') ? 3 : (flags.Contains('-') ? 2 : (flags.Contains('+') ? 1 : 0));
+                face.SortMode = flags.Contains('C') ? 0 : (flags.Contains('L') ? 3 : (flags.Contains('-') ? 2 : (flags.Contains('+') ? 1 : (int)defaultSortMode)));
                 face.IsWireframe = flags.Contains('W');
             }
 

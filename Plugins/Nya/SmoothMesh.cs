@@ -14,9 +14,9 @@
         /// <param name="group">Model object group</param>
         /// <param name="model">Model object</param>
         /// <param name="textures">Embed textures</param>
-        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
+        /// <param name="settings">Converter settings</param>
         /// <param name="uvTextures">Embed UV textures</param>
-        public SmoothMesh(Group group, Model model, List<Texture> textures, bool unwrapTextures, ref List<Texture> uvTextures) : base(group, model, textures, unwrapTextures, ref uvTextures)
+        public SmoothMesh(Group group, Model model, List<Texture> textures, NyaArguments settings, ref List<Texture> uvTextures) : base(group, model, textures, settings, ref uvTextures)
         {
             this.Normals = new FxVector[this.PointCount];
 

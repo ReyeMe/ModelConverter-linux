@@ -16,9 +16,9 @@
         /// <param name="group">Model object group</param>
         /// <param name="model">Model object</param>
         /// <param name="modelTextures">Model loaded textures</param>
-        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
+        /// <param name="settings">Converter settings</param>
         /// <param name="uvTextures">Embed UV textures</param>
-        public Mesh(Group group, Model model, List<Texture> modelTextures, bool unwrapTextures, ref List<Texture> uvTextures)
+        public Mesh(Group group, Model model, List<Texture> modelTextures, NyaArguments settings, ref List<Texture> uvTextures)
         {
             List<FaceFlags> faceFlags = new List<FaceFlags>();
             List<Polygon> facePolygons = new List<Polygon>();
@@ -26,7 +26,7 @@
 
             foreach (Face face in model.Faces)
             {
-                (FaceFlags flags, Polygon polygon) faceData = Mesh.ConvertFace(face, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
+                (FaceFlags flags, Polygon polygon) faceData = Mesh.ConvertFace(face, group, modelTextures, settings, ref vertices, ref uvTextures);
                 faceFlags.Add(faceData.flags);
                 facePolygons.Add(faceData.polygon);
             }
@@ -45,14 +45,14 @@
         /// <param name="face">Face data</param>
         /// <param name="group">Model object group</param>
         /// <param name="modelTextures">Textures from model file textures</param>
-        /// <param name="unwrapTextures">Unwrap model textures by UV</param>
+        /// <param name="settings">Converter settings</param>
         /// <param name="vertices">Model vertices</param>
         /// <param name="uvTextures">Embed model vertices</param>
         private static (FaceFlags, Polygon) ConvertFace(
             Face face,
             Group group,
             List<Texture> modelTextures,
-            bool unwrapTextures,
+            NyaArguments settings,
             ref List<Vector3D> vertices,
             ref List<Texture> uvTextures)
         {
@@ -69,7 +69,7 @@
             faceFlag.IsWireframe = face.IsWireframe;
 
             // Read polygon
-            Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, unwrapTextures, ref vertices, ref uvTextures);
+            Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, !settings.NoUV, ref vertices, ref uvTextures);
 
             return (faceFlag, polygon);
         }

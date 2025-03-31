@@ -60,11 +60,11 @@
             {
                 if (settigns.ModelType == NyaArguments.ModelTypes.Flat)
                 {
-                    meshes.Add(new Mesh(group, model, textures, !this.settigns.NoUV, ref uvTextures));
+                    meshes.Add(new Mesh(group, model, textures, this.settigns, ref uvTextures));
                 }
                 else
                 {
-                    meshes.Add(new SmoothMesh(group, model, textures, !this.settigns.NoUV, ref uvTextures));
+                    meshes.Add(new SmoothMesh(group, model, textures, this.settigns, ref uvTextures));
                 }
             }
 

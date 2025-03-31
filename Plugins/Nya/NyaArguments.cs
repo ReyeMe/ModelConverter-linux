@@ -33,7 +33,6 @@
         [CmdArgument("type", "t")]
         public ModelTypes ModelType { get; set; }
 
-
         /// <summary>
         /// Gets or sets a value indicating whether to generate fake UV mapping textures
         /// </summary>
