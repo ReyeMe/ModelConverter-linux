@@ -1,10 +1,12 @@
 ﻿namespace ModelConverter.Geometry
 {
     using System.Collections.Generic;
+    using System.Diagnostics;
 
     /// <summary>
     /// WaveFront model file
     /// </summary>
+    [DebuggerDisplay("Name = {Name}")]
     public class Model
     {
         /// <summary>

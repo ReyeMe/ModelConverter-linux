@@ -1,5 +1,6 @@
 ﻿namespace Nya
 {
+    using System.Reflection.Metadata;
     using ModelConverter.Geometry;
     using ModelConverter.Graphics;
     using Nya.Serializer;
@@ -109,6 +110,30 @@
         /// </summary>
         [FieldOrder(0)]
         public ushort Width { get; set; }
+
+        /// <summary>
+        /// Image hash
+        /// </summary>
+        private string hash = string.Empty;
+
+        /// <summary>
+        /// Gets image hash
+        /// </summary>
+        public string Hash
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(this.hash))
+                {
+                    using (var sha1 = System.Security.Cryptography.SHA1.Create())
+                    {
+                        this.hash = string.Concat(sha1.ComputeHash(this.Data.SelectMany(pair => new byte[] { (byte)((pair >> 8) & 0xf), (byte)(pair & 0xf) }).ToArray()).Select(x => x.ToString("X2")));
+                    }
+                }
+
+                return this.hash;
+            }
+        }
 
         /// <summary>
         /// Get UV unwrap texture

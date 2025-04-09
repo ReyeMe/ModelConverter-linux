@@ -245,17 +245,30 @@
         private static int GetUvMappedTexture(Texture baseTexture, List<int> uv, List<Vector3D> uvCoords, ref List<Texture> uvTextures)
         {
             // Check if texture mapped to this region exists already
-            int existing = uvTextures
-                .FindIndex(texture => texture.GetBaseName() == baseTexture.Name && texture.UV.Select((id, i) => (uvCoords[id] - uvCoords[uv[i]]).GetLength() <= double.Epsilon).All(val => val));
+            var createdFromBase = uvTextures.Select((texture, index) => new KeyValuePair<int, Texture>(index, texture)).Where(texture => texture.Value.GetBaseName() == baseTexture.Name).ToList();
+            var existing = createdFromBase
+                .Where(texture => texture.Value.UV.Select((id, i) => (uvCoords[id] - uvCoords[uv[i]]).GetLength() <= double.Epsilon).All(val => val))
+                .DefaultIfEmpty(new KeyValuePair<int, Texture>(-1, baseTexture))
+                .First().Key;
 
             // If not, generate new texture
-            if (existing == -1)
+            if (existing < 0)
             {
                 List<Vector3D> coords = uv.Select(coord => uvCoords[coord]).ToList();
                 Texture unwrap = Texture.GetUnwrap(baseTexture, coords);
                 unwrap.UV = uv.ToArray();
                 existing = uvTextures.Count;
-                uvTextures.Add(unwrap);
+
+                var found = createdFromBase.FindIndex(pair => pair.Value.Hash == unwrap.Hash);
+
+                if (found < 0)
+                {
+                    uvTextures.Add(unwrap);
+                }
+                else
+                {
+                    return createdFromBase[found].Key;
+                }
             }
 
             return existing;
