@@ -261,6 +261,19 @@
                         }
                     }
                 }
+
+                // Order things
+                switch (settings.Order)
+                {
+                    case ArgumentSettings.ObjOrder.ByName:
+                        List<Model> models = group?.OrderBy(model => model.Name).ToList() ?? new List<Model>();
+                        group?.Clear();
+                        group?.AddRange(models);
+                        break;
+
+                    default:
+                        break;
+                }
             }
 
             PluginLoader.Plugin? exportPlugin;

@@ -11,6 +11,7 @@ i&#160;*[paths]*  | Path to the input file. (eg.: -i "work/models/test.obj") or 
 o&#160;*[path]*   | Path to the output file. (eg.: -o "work/result.tmf")
 help, h           | Shows this helps screen. To show specific plugin help add plugin name after command.
 plugins           | Show all available plugins.
+order             | ``Keep`` = Keep meshes in same order as within files. (default)<br/>``ByName`` = Order all meshes alphabetically before exporting
 
 > __Note:__ ``-i`` argument can take multiple paths, this allows the export plugins to create either vertex animated models or store multiple models in a single file.  
 Example: ``-i "MyFolder/model_01.obj" "MyFolder/model_02.obj"``

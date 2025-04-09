@@ -11,6 +11,29 @@
     public sealed class ArgumentSettings
     {
         /// <summary>
+        /// Object order in group
+        /// </summary>
+        public enum ObjOrder
+        {
+            /// <summary>
+            /// Keep file same order as within file
+            /// </summary>
+            Keep = 0,
+
+            /// <summary>
+            /// Order alphabetically
+            /// </summary>
+            ByName
+        }
+
+        /// <summary>
+        /// How to order objects before export
+        /// </summary>
+        [CmdHelp("Indicates how to order loaded objects for export. Valid values are 'Keep' (default option), 'ByName' alphabetical sort.")]
+        [CmdArgument("order")]
+        public ObjOrder Order { get; set; }
+
+        /// <summary>
         /// Gets or sets export plugin override
         /// </summary>
         [CmdHelp("Force export plugin regardless of file extension")]
