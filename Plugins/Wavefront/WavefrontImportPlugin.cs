@@ -5,6 +5,7 @@
     using ModelConverter.PluginLoader;
     using System;
     using System.Globalization;
+    using System.Reflection;
 
     [Plugin("Wavefront", "Wavefront .obj file importer", ".obj", typeof(ObjArguments))]
     public class WavefrontImportPlugin : ModelConverter.PluginLoader.IImportPlugin
@@ -87,7 +88,53 @@
                 return null;
             }
 
+            // Try to rebuild missing normals
+            WavefrontImportPlugin.RebuildNormals(models);
+
             return models;
+        }
+
+        /// <summary>
+        /// Rebuild missing normals
+        /// </summary>
+        /// <param name="models">Model objects</param>
+        private static void RebuildNormals(Group models)
+        {
+            foreach (var model in models)
+            {
+                foreach (var face in model.Faces)
+                {
+                    if (!face.Normals.Any())
+                    {
+                        List<Vector3D> vertexNormals = new List<Vector3D>();
+
+                        // Collect all vertex normals
+                        for (int vert = 0; vert < face.Vertices.Count; vert++)
+                        {
+                            var segment1 = models.Vertices[face.Vertices[(vert + 1) % face.Vertices.Count]] - models.Vertices[face.Vertices[vert]];
+                            var segment2 = models.Vertices[face.Vertices[vert - 1 < 0 ? (face.Vertices.Count - 1) : (vert -1)]] - models.Vertices[face.Vertices[vert]];
+
+                            var cross = new Vector3D(0.0, 0.0, 1.0);
+
+                            if (segment1.GetLength() > 0.0 && segment2.GetLength() > 0.0)
+                            {
+                                cross = segment1.GetNormal().Cross(segment2.GetNormal()).GetNormal();
+                            }
+
+                            vertexNormals.Add(cross);
+                        }
+
+                        face.Normals.AddRange(Enumerable.Repeat(models.Normals.Count, face.Vertices.Count));
+                        models.Normals.Add(vertexNormals.Aggregate((first, second) => first + second).GetNormal());
+
+                    }
+                    else if (face.Normals.Count < face.Vertices.Count)
+                    {
+                        // Some normals are missing, just repeat last one
+                        face.Normals.AddRange(Enumerable.Repeat(face.Normals.Last(), face.Vertices.Count - face.Normals.Count));
+                    }
+                }
+            }
         }
 
         /// <summary>
