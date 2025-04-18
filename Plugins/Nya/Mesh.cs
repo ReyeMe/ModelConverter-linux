@@ -58,6 +58,12 @@
         {
             FaceFlags faceFlag = new FaceFlags();
 
+            if (!group.MaterialTextures.ContainsKey(face.Material))
+            {
+                Console.WriteLine($"Warning: Material '{face.Material}' was not found! Replacing with purple.");
+                group.MaterialTextures.Add(face.Material, new Material { BaseColor = ModelConverter.Graphics.Color.FromRgb(128, 0, 128) });
+            }
+
             // Read flags
             faceFlag.HasTexture = group.MaterialTextures[face.Material] is TextureReferenceMaterial || group.MaterialTextures[face.Material] is TextureMaterial;
             faceFlag.IsDoubleSided = face.IsDoubleSided;

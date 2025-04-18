@@ -34,7 +34,7 @@
         /// </summary>
         /// <param name="inputFile">File path</param>
         /// <returns>Imported <see cref="Group"/></returns>
-        public Group Import(string inputFile)
+        public Group? Import(string inputFile)
         {
             Group models = new Group();
             string lastMaterial = string.Empty;
@@ -80,7 +80,13 @@
                 }
             }
 
-            WavefrontImportPlugin.ReadMtl(models, inputFile);
+            if (!WavefrontImportPlugin.ReadMtl(models, inputFile))
+            {
+                var file = Path.GetFileNameWithoutExtension(inputFile) + ".mtl";
+                Console.WriteLine($"Error: '{file}' file was not found!");
+                return null;
+            }
+
             return models;
         }
 
@@ -218,7 +224,8 @@
         /// </summary>
         /// <param name="models">Loaded models</param>
         /// <param name="waveFrontFile">Path to the WaveFront file</param>
-        private static void ReadMtl(Group models, string waveFrontFile)
+        /// <returns><c>true</c> if file was read properly</returns>
+        private static bool ReadMtl(Group models, string waveFrontFile)
         {
             models.MaterialTextures = new Dictionary<string, Material>
             {
@@ -279,6 +286,12 @@
                     }
                 }
             }
+            else
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }
