@@ -62,8 +62,9 @@
         {
             if (exitCode != ExitCodes.Ok)
             {
+                string code = exitCode.ToString("X");
                 string exitCodeName = (new string(exitCode.ToString().SelectMany(x => char.IsUpper(x) ? new[] { ' ', x } : new[] { x }).ToArray())).Trim();
-                Console.WriteLine($"An error has occured. Exited with: {exitCodeName}");
+                Console.WriteLine($"An error has occured. Exited with: {exitCodeName} (0x{code})");
             }
 
             Environment.Exit((int)exitCode);
@@ -142,7 +143,24 @@
                 Program.Exit(ExitCodes.Ok);
             }
 
-            if (settings.InputFile?.All(file => string.IsNullOrEmpty(file) || !File.Exists(file)) ?? false)
+            if ((!settings.InputFile?.Any()) ?? true)
+            {
+                Console.WriteLine("No input files were specified! Use --help or -h for help.");
+                Program.Exit(ExitCodes.NoOrBadInput);
+            }
+
+            bool allFilesValid = true;
+
+            foreach (var file in settings.InputFile ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrEmpty(file) || !File.Exists(file))
+                {
+                    Console.WriteLine("Missing: '{0}' @ '{1}'", Path.GetFileName(file), file);
+                    allFilesValid = false;
+                }
+            }
+
+            if (!allFilesValid)
             {
                 Console.WriteLine("One or more of the input files are missing! Use --help or -h for help.");
                 Program.Exit(ExitCodes.NoOrBadInput);
