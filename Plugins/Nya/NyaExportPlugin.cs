@@ -58,7 +58,8 @@
 
             foreach (Model model in group)
             {
-                if (settigns.ModelType == NyaArguments.ModelTypes.Flat)
+                if (settigns.ModelType == NyaArguments.ModelTypes.Flat ||
+                    settigns.ModelType == NyaArguments.ModelTypes.NoLight)
                 {
                     meshes.Add(new Mesh(group, model, textures, this.settigns, ref uvTextures));
                 }
@@ -77,7 +78,8 @@
 
             object meshData;
 
-            if (settigns.ModelType == NyaArguments.ModelTypes.Flat)
+            if (settigns.ModelType == NyaArguments.ModelTypes.Flat ||
+                settigns.ModelType == NyaArguments.ModelTypes.NoLight)
             {
                 MeshGroup<Mesh> meshGroup = new MeshGroup<Mesh>();
                 meshGroup.Meshes = meshes.ToArray();

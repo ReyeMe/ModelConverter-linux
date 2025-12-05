@@ -16,6 +16,11 @@
         public enum ModelTypes
         {
             /// <summary>
+            /// Completely ignore shading
+            /// </summary>
+            NoLight,
+
+            /// <summary>
             /// Flat shaded model
             /// </summary>
             Flat,
@@ -29,7 +34,7 @@
         /// <summary>
         /// Gets or sets a value indicating type of the model to export
         /// </summary>
-        [CmdHelp("Model type can be either Smooth or Flat.\nDefault value is flat.")]
+        [CmdHelp("Model type can be either Smooth, Flat or NoLight.\nDefault value is NoLight.")]
         [CmdArgument("type", "t")]
         public ModelTypes ModelType { get; set; }
 

@@ -76,6 +76,9 @@
         /// <summary>
         /// Gets or sets a flag indicating whether face is always flat shaded
         /// </summary>
+        /// <remarks>
+        /// If mesh type is flat, and this flag is true, no light flag will be set
+        /// </remarks>
         public bool IsFlat
         {
             get
@@ -134,6 +137,22 @@
             set
             {
                 this.Flags2 =  (byte)((this.Flags2 & 0x7f) | (value ? 0x80 : 0));
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a flag indicating whether face ignores light
+        /// </summary>
+        public bool NoLight
+        {
+            get
+            {
+                return (this.Flags2 & 0x40) != 0;
+            }
+
+            set
+            {
+                this.Flags2 =  (byte)((this.Flags2 & 0xbf) | (value ? 0x40 : 0));
             }
         }
 

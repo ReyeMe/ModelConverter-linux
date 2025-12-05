@@ -69,10 +69,13 @@
             faceFlag.IsDoubleSided = face.IsDoubleSided;
             faceFlag.IsHalfTransparent = face.IsHalfTransparent;
             faceFlag.HasMeshEffect = face.IsMesh;
-            faceFlag.IsFlat = face.IsFlat;
             faceFlag.SortMode = face.SortMode;
             faceFlag.IsHalfBright = face.IsHalfBright;
             faceFlag.IsWireframe = face.IsWireframe;
+
+            // Lighting
+            faceFlag.IsFlat = face.IsFlat | settings.ModelType == NyaArguments.ModelTypes.NoLight;
+            faceFlag.NoLight = face.NoLight | settings.ModelType == NyaArguments.ModelTypes.NoLight;
 
             // Read polygon
             Polygon polygon = Mesh.ConvertPolygon(face, faceFlag, group, modelTextures, !settings.NoUV, ref vertices, ref uvTextures);
@@ -115,7 +118,11 @@
                 if (face.Vertices.Count < 4)
                 {
                     face.Vertices.Add(face.Vertices.Last());
-                    face.Uv.Add(face.Uv.Last());
+
+                    if (face.Uv.Count > 0)
+                    {
+                        face.Uv.Add(face.Uv.Last());
+                    }
 
                     if (face.Normals.Count > 0)
                     {
@@ -126,7 +133,8 @@
 
             if (faceFlag.HasTexture && !faceFlag.IsWireframe)
             {
-                if (unwrapTextures)
+                // Can unwrap only if UV is present
+                if (unwrapTextures && (face.Uv?.Any() ?? false))
                 {
                     Texture? texture = modelTextures.FirstOrDefault(material => material.Name == face.Material);
 

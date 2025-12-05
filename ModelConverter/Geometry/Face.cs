@@ -43,6 +43,11 @@
         public string Material { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets a value indicating whether face is not lit
+        /// </summary>
+        public bool NoLight { get; set; }
+
+        /// <summary>
         /// Gets or sets normal vector indices
         /// </summary>
         public List<int> Normals { get; set; } = new List<int>();

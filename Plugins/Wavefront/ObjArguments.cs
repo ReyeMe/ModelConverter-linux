@@ -16,6 +16,7 @@
         public const string FaceHelp = "Valid face flags: (used in material name, eg.: 'MyMaterialName_DF-')\n" +
             "\t'D'\t- Double sided face\n" +
             "\t'F'\t- Force flat shaded\n" +
+            "\t'N'\t- Force no light\n" +
             "\t'M'\t- Enable mesh effect\n" +
             "\t'H'\t- Enable half transparency effect\n" +
             "\t'B'\t- Enable half brightness\n" +

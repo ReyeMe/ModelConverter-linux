@@ -54,6 +54,7 @@ M       | Mesh checkerboard transparency
 D       | Face is double sided
 H       | Half-transparent (50% VDP1 transparency)
 F       | Force face to be flat shaded
+N       | Force no light
 B       | Half-bright (50% color brightness)
 W       | Mesh face is rendered as outline wires (rendered as closed polyline)
 C,L,-,+ | ``C`` = Sort by center of quad (default if -sort not set)<br/>``L`` = Same sort as last rendered quad<br/>``-`` = Sort by closest point<br/>``+`` = Sort by furthest point<br/>If not specified, sorting by center point is used
@@ -86,7 +87,7 @@ This format supports UV mapping and smooth shading, also allows for multiple obj
 Argument     | Description
 -------------|------------------------------------------------------
 w, no-unwrap | Disable UV mapping preprocessor
-t, type      | Specify object type<br/>``-t Flat`` = Flat shaded<br/>``-t Smooth`` = Smooth shaded model
+t, type      | Specify object type<br/>``-t NoLight`` = Not shaded<br/>``-t Flat`` = Flat shaded<br/>``-t Smooth`` = Smooth shaded model
 
 ### Custom plugins
 Custom plugins can be also written by referencing the ModelConverter.dll and implementing the interfaces within. Custom plugin dll with its dependencies can than be put inside ``/plugins/[plugin name]/`` folder.
