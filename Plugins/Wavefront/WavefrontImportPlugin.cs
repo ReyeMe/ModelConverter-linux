@@ -100,27 +100,28 @@
         /// <param name="mtlPath">MTL texture path</param>
         /// <param name="modelFolder">Model folder path</param>
         /// <returns>Absolute texture file path</returns>
-        private static string? GetAbsoluteTexturePath(string mtlPath, string modelFolder)
-        {
-            try
-            {
-                if (File.Exists(mtlPath))
-                {
-                    return mtlPath.ToLower();
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.ToString();
-            }
+	private static string? GetAbsoluteTexturePath(string mtlPath, string modelFolder)
+	{
+	    if (string.IsNullOrWhiteSpace(mtlPath)) 
+		return null;
 
-            if (!string.IsNullOrWhiteSpace(mtlPath))
-            {
-                return Path.Combine(modelFolder, mtlPath).ToLower();
-            }
+	    try
+	    {
+		if (Path.IsPathRooted(mtlPath) && File.Exists(mtlPath))
+		{
+		    return mtlPath;
+		}
 
-            return null;
-        }
+		string combinedPath = Path.Combine(modelFolder, mtlPath);
+		return Path.GetFullPath(combinedPath);
+	    }
+	    catch (Exception ex)
+	    {
+		// Log the exception if you have a logger, otherwise:
+		Console.WriteLine($"Error resolving path: {ex.Message}");
+		return null;
+	    }
+	}
 
         /// <summary>
         /// parse color
