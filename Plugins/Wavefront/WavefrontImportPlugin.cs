@@ -102,24 +102,24 @@
         /// <returns>Absolute texture file path</returns>
         private static string? GetAbsoluteTexturePath(string mtlPath, string modelFolder)
         {
+            if (string.IsNullOrWhiteSpace(mtlPath)) 
+                return null;
+
             try
             {
-                if (File.Exists(mtlPath))
+                if (Path.IsPathRooted(mtlPath) && File.Exists(mtlPath))
                 {
-                    return mtlPath.ToLower();
+                    return mtlPath;
                 }
+
+                string combinedPath = Path.Combine(modelFolder, mtlPath);
+                return Path.GetFullPath(combinedPath);
             }
             catch (Exception ex)
             {
-                ex.ToString();
+                Console.WriteLine($"Error resolving path: {ex.Message}");
+                return null;
             }
-
-            if (!string.IsNullOrWhiteSpace(mtlPath))
-            {
-                return Path.Combine(modelFolder, mtlPath).ToLower();
-            }
-
-            return null;
         }
 
         /// <summary>
