@@ -169,7 +169,8 @@
                     Marshal.StructureToPtr(data, ptr, true);
                     Marshal.Copy(ptr, array, 0, length);
                     Marshal.FreeHGlobal(ptr);
-                    bytes.AddRange(array.Reverse());
+                    Array.Reverse(array);
+                    bytes.AddRange(array);
                 }
             }
 
