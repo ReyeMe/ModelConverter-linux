@@ -106,28 +106,31 @@
             {
                 throw new NotSupportedException("Only supported faces are triangles and quads!");
             }
-            else
+
+            // Track whether this was originally a quad before triangle→quad padding,
+            // so the UV canonicalization below only runs on true quads (degenerate
+            // padded triangles must keep uv[2] == uv[3]).
+            bool wasQuad = face.Vertices.Count == 4;
+
+            // We have less normals for some reason
+            if (face.Normals.Count > 0 && face.Normals.Count != face.Vertices.Count)
             {
-                // We have less normals for some reason
-                if (face.Normals.Count > 0 && face.Normals.Count != face.Vertices.Count)
+                face.Normals.AddRange(Enumerable.Repeat(face.Normals.Last(), face.Vertices.Count - face.Normals.Count));
+            }
+
+            // We have triangle
+            if (face.Vertices.Count < 4)
+            {
+                face.Vertices.Add(face.Vertices.Last());
+
+                if (face.Uv.Count > 0)
                 {
-                    face.Normals.AddRange(Enumerable.Repeat(face.Normals.Last(), face.Vertices.Count - face.Normals.Count));
+                    face.Uv.Add(face.Uv.Last());
                 }
 
-                // We have triangle
-                if (face.Vertices.Count < 4)
+                if (face.Normals.Count > 0)
                 {
-                    face.Vertices.Add(face.Vertices.Last());
-
-                    if (face.Uv.Count > 0)
-                    {
-                        face.Uv.Add(face.Uv.Last());
-                    }
-
-                    if (face.Normals.Count > 0)
-                    {
-                        face.Normals.Add(face.Normals.Last());
-                    }
+                    face.Normals.Add(face.Normals.Last());
                 }
             }
 
@@ -140,36 +143,69 @@
 
                     if (texture != null)
                     {
-                        // Find corner with smalles UV coordinate
-                        int faceRotation = 0;
-                        Vector3D smallestUv = new Vector3D(double.MaxValue, double.MaxValue, 0.0);
-
-                        for (int i = 0; i < 4; i++)
+                        // Canonicalize quad UV ordering so GetUnwrap sees
+                        // [TL, TR, BR, BL] every time. Mirrored faces arrive here
+                        // with the same 4 UV points but traced in the opposite
+                        // direction from their non-mirrored counterparts; without
+                        // this fix, GetUnwrap's topDir/bottomDir end up along the
+                        // wrong axis on one side and the texture tile is sampled
+                        // rotated 90° relative to the other side.
+                        // Padded triangles keep uv[2]==uv[3] and must not be
+                        // reordered by this pass.
+                        if (wasQuad)
                         {
-                            Vector3D current = group.Uv[face.Uv[i]];
+                            // Find corner closest to UV top-left (minU, maxV in V-up space).
+                            double minU = face.Uv.Select(i => group.Uv[i].X).Min();
+                            double maxV = face.Uv.Select(i => group.Uv[i].Y).Max();
 
-                            if (smallestUv.X >= current.X && smallestUv.Y >= current.Y)
+                            int topLeft = 0;
+                            double bestDistSq = double.MaxValue;
+
+                            for (int i = 0; i < 4; i++)
                             {
-                                faceRotation = i;
-                                smallestUv = current;
+                                Vector3D c = group.Uv[face.Uv[i]];
+                                double du = c.X - minU;
+                                double dv = maxV - c.Y;
+                                double d = (du * du) + (dv * dv);
+
+                                if (d < bestDistSq)
+                                {
+                                    bestDistSq = d;
+                                    topLeft = i;
+                                }
                             }
+
+                            // Cyclic shift so topLeft lands at index 0.
+                            List<int> rotatedUvs = new List<int>(4);
+                            List<int> rotatedNormals = new List<int>(4);
+                            List<int> rotatedVertices = new List<int>(4);
+
+                            for (int i = 0; i < 4; i++)
+                            {
+                                rotatedUvs.Add(face.Uv[(i + topLeft) % 4]);
+                                rotatedNormals.Add(face.Normals[(i + topLeft) % 4]);
+                                rotatedVertices.Add(face.Vertices[(i + topLeft) % 4]);
+                            }
+
+                            // Check UV winding. For a CW quad [TL, TR, BR, BL] in
+                            // V-up UV space, (uv[1]-uv[0]) × (uv[3]-uv[0]) has
+                            // negative Z. Positive Z means CCW — swap indices 1↔3
+                            // to convert [TL, BL, BR, TR] → [TL, TR, BR, BL].
+                            Vector3D e01 = group.Uv[rotatedUvs[1]] - group.Uv[rotatedUvs[0]];
+                            Vector3D e03 = group.Uv[rotatedUvs[3]] - group.Uv[rotatedUvs[0]];
+                            double signedArea = (e01.X * e03.Y) - (e01.Y * e03.X);
+
+                            if (signedArea > 0.0)
+                            {
+                                (rotatedUvs[1], rotatedUvs[3]) = (rotatedUvs[3], rotatedUvs[1]);
+                                (rotatedNormals[1], rotatedNormals[3]) = (rotatedNormals[3], rotatedNormals[1]);
+                                (rotatedVertices[1], rotatedVertices[3]) = (rotatedVertices[3], rotatedVertices[1]);
+                            }
+
+                            face.Uv = rotatedUvs;
+                            face.Normals = rotatedNormals;
+                            face.Vertices = rotatedVertices;
                         }
-
-                        // Rotate face so that it start at the smalled UV coordinate
-                        List<int> rotatedUvs = new List<int>(face.Uv);
-                        List<int> rotatedNormals = new List<int>(face.Normals);
-                        List<int> rotatedVertices = new List<int>(face.Vertices);
-
-                        for (int i = 0; i < 4; i++)
-                        {
-                            rotatedUvs[(i + faceRotation) % 4] = face.Uv[i];
-                            rotatedNormals[(i + faceRotation) % 4] = face.Normals[i];
-                            rotatedVertices[(i + faceRotation) % 4] = face.Vertices[i];
-                        }
-
-                        face.Uv = rotatedUvs;
-                        face.Normals = rotatedNormals;
-                        face.Vertices = rotatedVertices;
 
                         // Generate texture
                         faceFlag.TextureId = Mesh.GetUvMappedTexture(texture, face.Uv, group.Uv, ref uvTextures);
