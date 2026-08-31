@@ -44,5 +44,14 @@
         [CmdHelp("Makes exporter NOT generate new textures based on the UV map.")]
         [CmdArgument("no-unwrap", "w")]
         public bool NoUV { get; set; }
+
+        /// <summary>
+        /// Gets or sets the texture similarity threshold percentage (0.0-100.0) above which 2 textures will be considered identical
+        /// as to reuse one texture in place of the other and therefore save space in memory.
+        /// </summary>
+        [CmdHelp("Texture similarity threshold percentage (0.0 to 100.0) above which 2 textures will be considered identical as to reuse one in place of the other and therefore save space in memory.\nDefault value is 100 (pixel perfect match).")]
+        [CmdArgument("texture-merge-threshold", "m")]
+        public double TextureMergeThreshold { get; set; } = 100.0;
+
     }
 }

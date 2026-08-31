@@ -88,6 +88,7 @@ Argument     | Description
 -------------|------------------------------------------------------
 w, no-unwrap | Disable UV mapping preprocessor
 t, type      | Specify object type<br/>``-t NoLight`` = Not shaded<br/>``-t Flat`` = Flat shaded<br/>``-t Smooth`` = Smooth shaded model
+m, texture-merge-threshold <number> | Texture similarity threshold percentage (0.0 to 100.0) above which 2 textures will be considered identical as to reuse one in place of the other and therefore save space in memory. Defaults to pixel perfect threshold (100.0).
 
 ### Custom plugins
 Custom plugins can be also written by referencing the ModelConverter.dll and implementing the interfaces within. Custom plugin dll with its dependencies can than be put inside ``/plugins/[plugin name]/`` folder.
